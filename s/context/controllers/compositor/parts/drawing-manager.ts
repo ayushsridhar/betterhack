@@ -1,9 +1,9 @@
+import * as PIXI from "../../../pixi.mjs.js"
 import {Actions} from "../../../actions.js"
 import {omnislate} from "../../../context.js"
 import {Annotation, AnyEffect, Point, DrawingToolType, State} from "../../../types.js"
 import {createDrawingTool, DrawingTool} from "./drawing-tools.js"
 import type {Compositor} from "../controller.js"
-import type {FederatedPointerEvent} from "pixi.js"
 
 /**
  * DrawingManager - Manages the drawing overlay layer on the Pixi canvas
@@ -24,6 +24,11 @@ export class DrawingManager {
 
 	// Store annotations rendered on canvas (keyed by annotation id)
 	private renderedAnnotations: Map<string, PIXI.Graphics> = new Map()
+
+	// Store bound event handlers for cleanup
+	private boundOnPointerDown: any
+	private boundOnPointerMove: any
+	private boundOnPointerUp: any
 
 	constructor(
 		private compositor: Compositor,
@@ -46,14 +51,19 @@ export class DrawingManager {
 	 * These events are active only when drawing mode is enabled
 	 */
 	private setupPointerEvents(): void {
+		// Store bound handlers for cleanup in destroy()
+		this.boundOnPointerDown = this.onPointerDown.bind(this)
+		this.boundOnPointerMove = this.onPointerMove.bind(this)
+		this.boundOnPointerUp = this.onPointerUp.bind(this)
+
 		//@ts-ignore - PIXI event type compatibility
-		this.compositor.app.stage.on('pointerdown', this.onPointerDown.bind(this))
+		this.compositor.app.stage.on('pointerdown', this.boundOnPointerDown)
 		//@ts-ignore - PIXI event type compatibility
-		this.compositor.app.stage.on('pointermove', this.onPointerMove.bind(this))
+		this.compositor.app.stage.on('pointermove', this.boundOnPointerMove)
 		//@ts-ignore - PIXI event type compatibility
-		this.compositor.app.stage.on('pointerup', this.onPointerUp.bind(this))
+		this.compositor.app.stage.on('pointerup', this.boundOnPointerUp)
 		//@ts-ignore - PIXI event type compatibility
-		this.compositor.app.stage.on('pointerupoutside', this.onPointerUp.bind(this))
+		this.compositor.app.stage.on('pointerupoutside', this.boundOnPointerUp)
 	}
 
 	/**
@@ -217,7 +227,7 @@ export class DrawingManager {
 		const {coordinates} = annotation
 
 		switch (annotation.type) {
-			case 'freehand':
+			case 'freehand': {
 				if (!coordinates.path || coordinates.path.length === 0) return null
 				const xs = coordinates.path.map(p => p.x)
 				const ys = coordinates.path.map(p => p.y)
@@ -226,17 +236,19 @@ export class DrawingManager {
 				const minY = Math.min(...ys)
 				const maxY = Math.max(...ys)
 				return {x: minX, y: minY, width: maxX - minX, height: maxY - minY}
+			}
 
 			case 'arrow':
-			case 'rectangle':
+			case 'rectangle': {
 				if (!coordinates.start || !coordinates.end) return null
 				const x = Math.min(coordinates.start.x, coordinates.end.x)
 				const y = Math.min(coordinates.start.y, coordinates.end.y)
 				const width = Math.abs(coordinates.end.x - coordinates.start.x)
 				const height = Math.abs(coordinates.end.y - coordinates.start.y)
 				return {x, y, width, height}
+			}
 
-			case 'circle':
+			case 'circle': {
 				if (!coordinates.center || !coordinates.radius) return null
 				return {
 					x: coordinates.center.x - coordinates.radius,
@@ -244,6 +256,7 @@ export class DrawingManager {
 					width: coordinates.radius * 2,
 					height: coordinates.radius * 2
 				}
+			}
 
 			default:
 				return null
@@ -554,6 +567,19 @@ export class DrawingManager {
 	 * Destroy the drawing manager and clean up resources
 	 */
 	public destroy(): void {
+		// Remove event listeners
+		const stage = this.compositor.app.stage
+		if (this.boundOnPointerDown) {
+			stage.off('pointerdown', this.boundOnPointerDown)
+		}
+		if (this.boundOnPointerMove) {
+			stage.off('pointermove', this.boundOnPointerMove)
+		}
+		if (this.boundOnPointerUp) {
+			stage.off('pointerup', this.boundOnPointerUp)
+			stage.off('pointerupoutside', this.boundOnPointerUp)
+		}
+
 		this.clearAnnotations()
 		this.compositor.app.stage.removeChild(this.annotationLayer)
 		this.annotationLayer.destroy()

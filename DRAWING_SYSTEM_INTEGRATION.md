@@ -254,20 +254,18 @@ Each annotation contains:
 interface Annotation {
   id: string                    // Unique identifier
   type: DrawingToolType         // 'freehand' | 'arrow' | 'rectangle' | 'circle'
-  color: string                 // Hex color (e.g., '#FF4444')
-  strokeWidth: number           // Stroke width in pixels
-  timestamp: number             // When the annotation was created
-
-  // Drawing data (varies by type)
-  points?: Point[]              // Freehand: array of {x, y} points
-  start?: Point                 // Arrow/Rectangle: start point
-  end?: Point                   // Arrow/Rectangle: end point
-  center?: Point                // Circle: center point
-  radius?: number               // Circle: radius in pixels
-
-  // Timeline association (for context)
-  associatedEffect?: string     // ID of effect this annotation overlaps
-  associatedTrack?: number      // Track index (0-based)
+  coordinates: {
+    start?: Point               // Arrow/Rectangle: start point
+    end?: Point                 // Arrow/Rectangle: end point
+    center?: Point              // Circle: center point
+    radius?: number             // Circle: radius in pixels
+    path?: Point[]              // Freehand: array of {x, y} points
+  }
+  affectedEffects: string[]     // IDs of clips this annotation overlaps
+  color?: string                // Hex color (e.g., '#FF4444')
+  strokeWidth?: number          // Stroke width in pixels
+  drawnAtTimecode?: number      // Timecode when annotation was created
+  context?: AnnotationContext   // Optional user-provided context for AI
 }
 ```
 
@@ -343,59 +341,59 @@ function analyzeAnnotationSpatially(annotation: Annotation) {
 
   switch (annotation.type) {
     case 'arrow':
-      if (annotation.start && annotation.end) {
-        const dx = annotation.end.x - annotation.start.x
-        const dy = annotation.end.y - annotation.start.y
+      if (annotation.coordinates.start && annotation.coordinates.end) {
+        const dx = annotation.coordinates.end.x - annotation.coordinates.start.x
+        const dy = annotation.coordinates.end.y - annotation.coordinates.start.y
         const length = Math.sqrt(dx * dx + dy * dy)
         const angle = Math.atan2(dy, dx) * (180 / Math.PI)
 
         return {
           direction: getDirectionFromAngle(angle),
           length: Math.round(length),
-          fromEffect: annotation.associatedEffect,
+          fromEffect: annotation.affectedEffects[0],
           // You can detect what the arrow points TO by checking end point
         }
       }
       break
 
     case 'rectangle':
-      if (annotation.start && annotation.end) {
-        const width = Math.abs(annotation.end.x - annotation.start.x)
-        const height = Math.abs(annotation.end.y - annotation.start.y)
+      if (annotation.coordinates.start && annotation.coordinates.end) {
+        const width = Math.abs(annotation.coordinates.end.x - annotation.coordinates.start.x)
+        const height = Math.abs(annotation.coordinates.end.y - annotation.coordinates.start.y)
         const area = width * height
 
         return {
           dimensions: {width: Math.round(width), height: Math.round(height)},
           area: Math.round(area),
-          coveredEffect: annotation.associatedEffect
+          coveredEffect: annotation.affectedEffects[0]
         }
       }
       break
 
     case 'circle':
-      if (annotation.center && annotation.radius) {
-        const area = Math.PI * annotation.radius * annotation.radius
+      if (annotation.coordinates.center && annotation.coordinates.radius) {
+        const area = Math.PI * annotation.coordinates.radius * annotation.coordinates.radius
 
         return {
-          radius: Math.round(annotation.radius),
+          radius: Math.round(annotation.coordinates.radius),
           area: Math.round(area),
-          centerPoint: annotation.center,
-          highlightedEffect: annotation.associatedEffect
+          centerPoint: annotation.coordinates.center,
+          highlightedEffect: annotation.affectedEffects[0]
         }
       }
       break
 
     case 'freehand':
-      if (annotation.points && annotation.points.length > 0) {
+      if (annotation.coordinates.path && annotation.coordinates.path.length > 0) {
         // Analyze freehand gesture
-        const bounds = getFreehandBounds(annotation.points)
-        const isClosed = isPathClosed(annotation.points)
+        const bounds = getFreehandBounds(annotation.coordinates.path)
+        const isClosed = isPathClosed(annotation.coordinates.path)
 
         return {
-          pointCount: annotation.points.length,
+          pointCount: annotation.coordinates.path.length,
           bounds,
           isClosed,
-          crossedEffects: [annotation.associatedEffect] // Could expand to multiple
+          crossedEffects: annotation.affectedEffects
         }
       }
       break

@@ -95,7 +95,7 @@ A complete drawing annotation system on top of the Pixi.js video preview canvas 
    - Added initial `annotations` state (empty array)
 
 3. **`s/context/actions.ts`**
-   - Added 8 new non-historical actions:
+   - Added 10 new non-historical actions:
      - `set_drawing_mode(enabled, tool?, color?, strokeWidth?)`
      - `set_drawing_tool(tool)`
      - `set_drawing_color(color)`
@@ -104,6 +104,8 @@ A complete drawing annotation system on top of the Pixi.js video preview canvas 
      - `remove_annotation(id)`
      - `clear_annotations()`
      - `set_annotations(annotations[])`
+     - `update_annotation(id, patch)`
+     - `set_selected_annotation(id | null)`
 
 4. **`s/context/controllers/compositor/controller.ts`**
    - Imported `DrawingManager`
@@ -407,7 +409,7 @@ omnislate.context.actions.set_drawing_mode(false)
 
 ## Dependencies Between Members
 
-```
+```text
 Drawing System (Member 1) ────┐
                                ├──→ Member 4 (AI) ──→ Member 3 (MCP)
 UI Components (Member 2) ──────┘

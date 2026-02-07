@@ -276,11 +276,11 @@ async function testAllTools() {
   ]
 
   for (const t of tools) {
-    console.log(`\n>>> ${t.name} - Draw now!`)
+    console.log(`\n>>> ${t.name} - Draw now! (5 seconds to draw)`)
     omnislate.context.actions.set_drawing_mode(true, t.tool, t.color, 3)
     await new Promise(resolve => {
-      console.log('Press Enter in console when done drawing this shape')
-      // User draws manually during this pause
+      console.log('You have 5 seconds to draw this shape...')
+      setTimeout(resolve, 5000) // Wait 5 seconds for user to draw
     })
   }
 

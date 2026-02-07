@@ -136,6 +136,7 @@ export class Compositor {
 			}
 		})
 		this.currently_played_effects.clear()
+		this.managers.drawingManager.clear()
 		this.app.renderer.clear()
 	}
 
@@ -147,6 +148,7 @@ export class Compositor {
 		this.#guidelineRect = guidelintRect
 		this.managers.animationManager.clearAnimations(omit)
 		this.managers.transitionManager.clearTransitions(omit)
+		this.managers.drawingManager.clear()
 		this.actions.set_selected_effect(null)
 	}
 	

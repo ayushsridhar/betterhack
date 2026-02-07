@@ -72,16 +72,25 @@ export const AnnotationContextBubble = shadow_view(use => (
 			updateBubblePosition(bubbleEl, container, annotation, settings, 16)
 	})
 
+	// Use mutable reference to avoid stale closure in ResizeObserver
+	const annotationRef = {current: annotation}
+
 	use.mount(() => {
 		const bubbleEl = use.shadow.querySelector('.annotation-context-bubble') as HTMLElement | null
 		if (!bubbleEl || !container) return () => {}
+
 		const ro = new ResizeObserver(() => {
-			if (container && annotation)
-				updateBubblePosition(bubbleEl, container, annotation, settings, 16)
+			if (container && annotationRef.current)
+				updateBubblePosition(bubbleEl, container, annotationRef.current, settings, 16)
 		})
 		ro.observe(container)
 		return () => ro.disconnect()
 	})
+
+	// Update ref when annotation changes
+	if (annotation) {
+		annotationRef.current = annotation
+	}
 
 	const setContext = (patch: Partial<AnnotationContext>) => {
 		actions.update_annotation(id, {

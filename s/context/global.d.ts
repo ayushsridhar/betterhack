@@ -24,9 +24,10 @@ declare global {
 	}
 }
 
-declare global {
-	const PIXI: typeof import("pixi.js")
-}
+// PIXI is already declared as a global namespace in pixi.mjs.d.ts
+// declare global {
+// 	const PIXI: typeof import("pixi.js")
+// }
 
 export interface GLTransition {
 	author: string

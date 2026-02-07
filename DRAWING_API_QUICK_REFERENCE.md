@@ -60,20 +60,18 @@ const descriptions = drawingManager.serializeAnnotationsForAI(state)
 {
   id: string
   type: 'freehand' | 'arrow' | 'rectangle' | 'circle'
-  color: string              // '#FF4444'
-  strokeWidth: number        // 3
-  timestamp: number          // Date.now()
-
-  // Geometry (varies by type)
-  points?: Point[]           // freehand only
-  start?: Point              // arrow, rectangle
-  end?: Point                // arrow, rectangle
-  center?: Point             // circle only
-  radius?: number            // circle only
-
-  // Context
-  associatedEffect?: string  // effect.id
-  associatedTrack?: number   // track index
+  coordinates: {
+    start?: Point            // arrow, rectangle: start point
+    end?: Point              // arrow, rectangle: end point
+    center?: Point           // circle: center point
+    radius?: number          // circle: radius
+    path?: Point[]           // freehand: array of points
+  }
+  affectedEffects: string[]  // IDs of clips this annotation overlaps
+  color?: string             // '#FF4444'
+  strokeWidth?: number       // 3
+  drawnAtTimecode?: number   // timecode when annotation was created
+  context?: AnnotationContext
 }
 ```
 
@@ -125,7 +123,6 @@ omnislate.context.actions.set_drawing_mode(false)
 - **Actions:** `s/context/actions.ts`
 - **Manager:** `s/context/controllers/compositor/parts/drawing-manager.ts`
 - **Tools:** `s/context/controllers/compositor/parts/drawing-tools.ts`
-- **Demo UI:** `s/components/drawing-toolbar-demo.ts`
 - **Full Docs:** `DRAWING_SYSTEM_INTEGRATION.md`
 - **Summary:** `DRAWING_SYSTEM_IMPLEMENTATION_SUMMARY.md`
 
