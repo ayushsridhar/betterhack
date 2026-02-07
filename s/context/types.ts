@@ -35,6 +35,7 @@ export interface HistoricalState {
 
 export interface NonHistoricalState {
 	selected_effect: AnyEffect | null
+	selected_annotation_id: string | null
 	is_playing: boolean
 	is_exporting: boolean
 	export_progress: number
@@ -46,6 +47,8 @@ export interface NonHistoricalState {
 	timebase: number
 	log: string
 	settings: Settings
+	drawing_mode: DrawingMode
+	annotations: Annotation[]
 }
 
 // export type XTimeline = NonHistoricalState & HistoricalState
@@ -205,6 +208,46 @@ export interface AddTrackIndicator {
 	type: "addTrack"
 }
 export type Status = "render" | "decode" | "demux" | "fetch"
+
+// Drawing Overlay Types
+export type DrawingToolType = 'freehand' | 'arrow' | 'rectangle' | 'circle'
+
+export interface Point {
+	x: number
+	y: number
+}
+
+// Optional user-provided context for AI (e.g. transition intent)
+export interface AnnotationContext {
+	transitionSpeed?: 'slow' | 'medium' | 'fast'
+	transitionSize?: 'small' | 'medium' | 'large'
+	notes?: string
+}
+
+// Standardized annotation format for team collaboration
+export interface Annotation {
+	id: string
+	type: DrawingToolType
+	coordinates: {
+		start?: Point              // arrow, rectangle: start point
+		end?: Point                // arrow, rectangle: end point
+		center?: Point             // circle: center point
+		radius?: number            // circle: radius
+		path?: Point[]             // freehand: array of points
+	}
+	affectedEffects: string[]      // IDs of clips this annotation overlaps
+	color?: string
+	strokeWidth?: number
+	drawnAtTimecode?: number       // timecode when annotation was created
+	context?: AnnotationContext
+}
+
+export interface DrawingMode {
+	enabled: boolean
+	tool: DrawingToolType
+	color: string
+	strokeWidth: number
+}
 
 // Utility type to adjust action types for broadcasting
 type WithBroadcast<T> = T extends (...args: infer P) => (...innerArgs: infer I) => infer R
