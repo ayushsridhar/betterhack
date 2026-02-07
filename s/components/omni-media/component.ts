@@ -77,9 +77,17 @@ export const OmniMedia = shadow_component((use) => {
 		}
 	}
 
+	const handleMediaDragStart = (e: DragEvent, mediaItem: Video | Image | Audio) => {
+		e.dataTransfer?.setData("application/x-omni-media", JSON.stringify({kind: mediaItem.kind, hash: mediaItem.hash}))
+		if (e.dataTransfer) {
+			e.dataTransfer.effectAllowed = "copy"
+		}
+	}
+
 	const handleDragOver = (e: DragEvent) => {
 		e.preventDefault()
 		e.stopPropagation()
+		if (e.dataTransfer?.types.includes("application/x-omni-media")) return
 		if(!dragActive) {
 			setDragActive(true)
 		}
@@ -89,6 +97,7 @@ export const OmniMedia = shadow_component((use) => {
 		e.preventDefault()
 		e.stopPropagation()
 		setDragActive(false)
+		if (e.dataTransfer?.types.includes("application/x-omni-media")) return
 
 		if (e.dataTransfer?.files) {
 			const fileInput = use.shadow.querySelector("#import") as HTMLInputElement
@@ -100,7 +109,7 @@ export const OmniMedia = shadow_component((use) => {
 
 	const render_video_element = (video: Video) => {
 		return html`
-			<div class="media-card video-card">
+			<div class="media-card video-card" draggable="true" @dragstart=${(e: DragEvent) => handleMediaDragStart(e, video)}>
 				<div
 					@pointerenter=${() => video_on_pointer.enter(video.element)}
 					@pointerleave=${() => video_on_pointer.leave(video.element)}
@@ -128,7 +137,7 @@ export const OmniMedia = shadow_component((use) => {
 
 	const render_image_element = (image: Image) => {
 		return html`
-			<div class="media-card image-card">
+			<div class="media-card image-card" draggable="true" @dragstart=${(e: DragEvent) => handleMediaDragStart(e, image)}>
 				<div class="media-element">
 					${image.element}
 					<div class="media-overlay">
@@ -152,7 +161,7 @@ export const OmniMedia = shadow_component((use) => {
 
 	const render_audio_element = (audio: Audio) => {
 		return html`
-			<div class="media-card audio-card">
+			<div class="media-card audio-card" draggable="true" @dragstart=${(e: DragEvent) => handleMediaDragStart(e, audio)}>
 				<div class="media-element audio">
 					<div class="audio-wave">
 						${audioWaveSvg}
