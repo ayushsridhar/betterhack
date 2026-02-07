@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* Background surfaces */
+  --color-bg-base: #09090b;
+  --color-bg-raised: #0f0f14;
+  --color-bg-surface: #16161e;
+  --color-bg-elevated: #1e1e28;
+  --color-bg-overlay: #262632;
+
+  /* Borders */
+  --color-border-subtle: #1e1e28;
+  --color-border-default: #2a2a38;
+  --color-border-strong: #3a3a4a;
+
+  /* Text */
+  --color-text-primary: #f0f0f5;
+  --color-text-secondary: #a0a0b4;
+  --color-text-tertiary: #6b6b80;
+  --color-text-disabled: #45455a;
+
+  /* Accent */
+  --color-accent: #7c6cf0;
+  --color-accent-hover: #9488f5;
+  --color-accent-muted: rgba(124, 108, 240, 0.15);
+
+  /* Semantic */
+  --color-danger: #f04444;
+  --color-success: #34d399;
+  --color-warning: #fbbf24;
+  --color-info: #38bdf8;
+
+  /* Clip colors */
+  --color-clip-video: #4f8df7;
+  --color-clip-video-bg: rgba(79, 141, 247, 0.12);
+  --color-clip-video-border: rgba(79, 141, 247, 0.5);
+  --color-clip-audio: #34d399;
+  --color-clip-audio-bg: rgba(52, 211, 153, 0.12);
+  --color-clip-audio-border: rgba(52, 211, 153, 0.5);
+  --color-clip-text: #fbbf24;
+  --color-clip-text-bg: rgba(251, 191, 36, 0.12);
+  --color-clip-text-border: rgba(251, 191, 36, 0.5);
+  --color-clip-image: #c084fc;
+  --color-clip-image-bg: rgba(192, 132, 252, 0.12);
+  --color-clip-image-border: rgba(192, 132, 252, 0.5);
+
+  /* Font */
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: var(--color-bg-base);
+  color: var(--color-text-secondary);
+  overflow-x: hidden;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-default);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-strong);
+}
