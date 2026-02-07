@@ -21,6 +21,7 @@ export const historical_state: HistoricalState = {
 
 export const non_historical_state: NonHistoricalState = {
 	selected_effect: null,
+	selected_annotation_id: null,
 	is_exporting: false,
 	export_progress: 0,
 	export_status: "demuxing",

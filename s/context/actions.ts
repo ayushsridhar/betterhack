@@ -116,11 +116,20 @@ export const non_historical = actionize_non_historical({
 	add_annotation: state => (annotation: Annotation) => {
 		state.annotations.push(annotation)
 	},
+	update_annotation: state => (id: string, patch: Partial<Annotation>) => {
+		const a = state.annotations.find(x => x.id === id)
+		if (a) Object.assign(a, patch)
+	},
+	set_selected_annotation: state => (id: string | null) => {
+		state.selected_annotation_id = id
+	},
 	remove_annotation: state => (id: string) => {
 		state.annotations = state.annotations.filter(a => a.id !== id)
+		if (state.selected_annotation_id === id) state.selected_annotation_id = null
 	},
 	clear_annotations: state => () => {
 		state.annotations = []
+		state.selected_annotation_id = null
 	},
 	set_annotations: state => (annotations: Annotation[]) => {
 		state.annotations = annotations

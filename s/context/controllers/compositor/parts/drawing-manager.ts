@@ -57,19 +57,26 @@ export class DrawingManager {
 	}
 
 	/**
-	 * Handle pointer down - start drawing
+	 * Handle pointer down - start drawing or select annotation
 	 */
 	private onPointerDown(event: PIXI.FederatedPointerEvent): void {
 		const state = this.getState()
 
-		// Only handle drawing if draw mode is enabled
-		if (!state.drawing_mode.enabled) return
+		if (state.drawing_mode.enabled) {
+			// Drawing: prevent other interactions and start drawing
+			event.stopPropagation()
+			const point = this.getCanvasPoint(event)
+			this.startDrawing(point, state)
+			return
+		}
 
-		// Prevent default canvas interactions
-		event.stopPropagation()
-
+		// When draw mode off: hit-test annotations for selection
 		const point = this.getCanvasPoint(event)
-		this.startDrawing(point, state)
+		const hit = this.getAnnotationAtPoint(point)
+		if (hit) {
+			event.stopPropagation()
+			this.actions.set_selected_annotation(hit.id)
+		}
 	}
 
 	/**
@@ -275,6 +282,38 @@ export class DrawingManager {
 		)
 	}
 
+	/** Hit-test padding in canvas pixels so thin shapes (e.g. arrows) are clickable */
+	private static readonly HIT_PADDING = 12
+
+	/**
+	 * Get the topmost annotation at a canvas point (for selection when draw mode is off).
+	 * Uses expanded bounds so arrows/lines are easier to click.
+	 */
+	public getAnnotationAtPoint(canvasPoint: Point): Annotation | null {
+		const state = this.getState()
+		const annotations = state.annotations || []
+		// Topmost = last in render order
+		for (let i = annotations.length - 1; i >= 0; i--) {
+			const annotation = annotations[i]
+			const bounds = this.getAnnotationBounds(annotation)
+			if (!bounds) continue
+			const pad = DrawingManager.HIT_PADDING
+			const x = bounds.x - pad
+			const y = bounds.y - pad
+			const w = bounds.width + pad * 2
+			const h = bounds.height + pad * 2
+			if (
+				canvasPoint.x >= x &&
+				canvasPoint.x <= x + w &&
+				canvasPoint.y >= y &&
+				canvasPoint.y <= y + h
+			) {
+				return annotation
+			}
+		}
+		return null
+	}
+
 	/**
 	 * Render all annotations from state
 	 * Called when annotations change or canvas is redrawn
@@ -471,6 +510,13 @@ export class DrawingManager {
 				}
 			} else {
 				description += ` on empty canvas area`
+			}
+
+			// Append user context for AI
+			const ctx = annotation.context
+			if (ctx && (ctx.transitionSpeed ?? ctx.transitionSize ?? ctx.notes)) {
+				description += ` with context: transition speed ${ctx.transitionSpeed ?? 'unspecified'}, transition size ${ctx.transitionSize ?? 'unspecified'}`
+				if (ctx.notes) description += `; notes: "${ctx.notes}"`
 			}
 
 			return description

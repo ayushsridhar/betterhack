@@ -35,6 +35,7 @@ export interface HistoricalState {
 
 export interface NonHistoricalState {
 	selected_effect: AnyEffect | null
+	selected_annotation_id: string | null
 	is_playing: boolean
 	is_exporting: boolean
 	export_progress: number
@@ -216,6 +217,13 @@ export interface Point {
 	y: number
 }
 
+// Optional user-provided context for AI (e.g. transition intent)
+export interface AnnotationContext {
+	transitionSpeed?: 'slow' | 'medium' | 'fast'
+	transitionSize?: 'small' | 'medium' | 'large'
+	notes?: string
+}
+
 // Standardized annotation format for team collaboration
 export interface Annotation {
 	id: string
@@ -231,6 +239,7 @@ export interface Annotation {
 	color?: string
 	strokeWidth?: number
 	drawnAtTimecode?: number       // timecode when annotation was created
+	context?: AnnotationContext
 }
 
 export interface DrawingMode {

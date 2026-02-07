@@ -6,6 +6,7 @@ import playSvg from "../../../../icons/gravity-ui/play.svg.js"
 import pauseSvg from "../../../../icons/gravity-ui/pause.svg.js"
 import {StateHandler} from "../../../../views/state-handler/view.js"
 import fullscreenSvg from "../../../../icons/gravity-ui/fullscreen.svg.js"
+import {AnnotationContextBubble} from "../../../../views/annotation-context-bubble/view.js"
 
 export const MediaPlayer = shadow_view(use => () => {
 	use.styles(styles)
@@ -47,6 +48,10 @@ export const MediaPlayer = shadow_view(use => () => {
 	})
 
 	const figure = use.defer(() => use.shadow.querySelector("figure"))!
+	const canvasContainer = use.defer(() => use.shadow.querySelector(".canvas-container")) as HTMLElement | null
+	const selectedAnnotation = state.selected_annotation_id
+		? (state.annotations.find(a => a.id === state.selected_annotation_id) ?? null)
+		: null
 
 	const toggle_fullScreen = () => {
 		if (!document.fullscreenElement) {
@@ -66,6 +71,7 @@ export const MediaPlayer = shadow_view(use => () => {
 						? html`${compositor.app.view}`
 						: null}
 				</div>
+				${AnnotationContextBubble([canvasContainer, selectedAnnotation, state.settings, use.context.actions])}
 			</figure>
 			<div id="video-controls" class="controls">
 				<button
