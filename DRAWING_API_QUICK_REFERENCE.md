@@ -5,9 +5,9 @@
 ```typescript
 import {omnislate} from "./s/context/context.js"
 
-const {state, actions, compositor} = omnislate.context
+const {state, actions, controllers} = omnislate.context
 const {drawing_mode, annotations} = state
-const {drawingManager} = compositor.managers
+const {drawingManager} = controllers.compositor.managers
 ```
 
 ---
@@ -60,20 +60,17 @@ const descriptions = drawingManager.serializeAnnotationsForAI(state)
 {
   id: string
   type: 'freehand' | 'arrow' | 'rectangle' | 'circle'
-  color: string              // '#FF4444'
-  strokeWidth: number        // 3
-  timestamp: number          // Date.now()
-
-  // Geometry (varies by type)
-  points?: Point[]           // freehand only
-  start?: Point              // arrow, rectangle
-  end?: Point                // arrow, rectangle
-  center?: Point             // circle only
-  radius?: number            // circle only
-
-  // Context
-  associatedEffect?: string  // effect.id
-  associatedTrack?: number   // track index
+  coordinates: {
+    start?: Point              // arrow, rectangle: start point
+    end?: Point                // arrow, rectangle: end point
+    center?: Point             // circle: center point
+    radius?: number            // circle: radius
+    path?: Point[]             // freehand: array of points
+  }
+  affectedEffects: string[]    // IDs of clips this annotation overlaps
+  color?: string               // '#FF4444'
+  strokeWidth?: number         // 3
+  drawnAtTimecode?: number     // timecode when annotation was created
 }
 ```
 
@@ -107,7 +104,7 @@ console.log(omnislate.context.state.annotations)
 
 // Get AI descriptions
 console.log(
-  omnislate.context.compositor.managers.drawingManager
+  omnislate.context.controllers.compositor.managers.drawingManager
     .serializeAnnotationsForAI(omnislate.context.state)
 )
 

@@ -37,10 +37,10 @@ A complete drawing annotation system on top of the Pixi.js video preview canvas 
 - Effect metadata capture (effect.id, effect.kind, effect.name)
 
 ✅ **Structured Data Storage**
-- Clean annotation data model with type-specific properties
-- Timestamp tracking
+- Clean annotation data model with nested `coordinates` object
+- Timecode tracking (`drawnAtTimecode`)
 - Color and stroke width metadata
-- Spatial data: points (freehand), start/end (arrows/rects), center/radius (circles)
+- Spatial data under `coordinates`: path (freehand), start/end (arrows/rects), center/radius (circles)
 
 ✅ **API for Member 4 (AI Integration)**
 - `getAnnotations()` - Returns structured annotation array
@@ -224,7 +224,7 @@ console.log(annotations.length)        // number of annotations
 **Key API You'll Use:**
 ```typescript
 const {compositor, state} = omnislate.context
-const {drawingManager} = compositor.managers
+const {drawingManager} = controllers.compositor.managers
 
 // Get raw annotation data
 const annotations = drawingManager.getAnnotations()
@@ -241,28 +241,25 @@ const descriptions = drawingManager.serializeAnnotationsForAI(state)
 interface Annotation {
   id: string
   type: 'freehand' | 'arrow' | 'rectangle' | 'circle'
-  color: string
-  strokeWidth: number
-  timestamp: number
-
-  // Type-specific geometry
-  points?: Point[]      // freehand
-  start?: Point         // arrow, rectangle
-  end?: Point           // arrow, rectangle
-  center?: Point        // circle
-  radius?: number       // circle
-
-  // Timeline context
-  associatedEffect?: string  // effect.id that annotation overlaps
-  associatedTrack?: number   // track index (0-based)
+  coordinates: {
+    start?: Point         // arrow, rectangle
+    end?: Point           // arrow, rectangle
+    center?: Point        // circle
+    radius?: number       // circle
+    path?: Point[]        // freehand
+  }
+  affectedEffects: string[]    // IDs of effects this annotation overlaps
+  color?: string
+  strokeWidth?: number
+  drawnAtTimecode?: number     // timecode when annotation was created
 }
 ```
 
 **Example AI Prompt Construction:**
 ```typescript
 async function buildPrompt(userText: string) {
-  const {state, compositor} = omnislate.context
-  const {drawingManager} = compositor.managers
+  const {state, controllers} = omnislate.context
+  const {drawingManager} = controllers.compositor.managers
 
   const annotationDescriptions = drawingManager.serializeAnnotationsForAI(state)
 
@@ -297,7 +294,7 @@ omnislate.context.actions.set_drawing_mode(true, 'freehand', '#FF0000', 3)
 console.log('Annotations:', omnislate.context.state.annotations)
 
 // 4. Get serialized descriptions for AI
-const descriptions = omnislate.context.compositor.managers.drawingManager
+const descriptions = omnislate.context.controllers.compositor.managers.drawingManager
   .serializeAnnotationsForAI(omnislate.context.state)
 console.log('For AI:', descriptions)
 
@@ -324,7 +321,7 @@ omnislate.context.actions.set_drawing_mode(false)
 
 2. **After drawing:**
    - Annotation data is immediately available in state
-   - `associatedEffect` is populated if drawing overlaps an effect
+   - `affectedEffects` is populated with IDs of overlapping effects
    - Serialized descriptions are ready for AI consumption
 
 3. **When draw mode is disabled:**

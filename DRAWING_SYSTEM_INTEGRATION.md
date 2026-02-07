@@ -234,13 +234,13 @@ function showContextMenu(x: number, y: number) {
 import {omnislate} from "../context/context.js"
 
 function getAnnotationsForAI() {
-  const {state, compositor} = omnislate.context
+  const {state, controllers} = omnislate.context
 
   // Raw annotation data
   const annotations = state.annotations
 
   // Or use the manager's API
-  const annotationsFromManager = compositor.managers.drawingManager.getAnnotations()
+  const annotationsFromManager = controllers.compositor.managers.drawingManager.getAnnotations()
 
   return annotations
 }
@@ -254,20 +254,19 @@ Each annotation contains:
 interface Annotation {
   id: string                    // Unique identifier
   type: DrawingToolType         // 'freehand' | 'arrow' | 'rectangle' | 'circle'
-  color: string                 // Hex color (e.g., '#FF4444')
-  strokeWidth: number           // Stroke width in pixels
-  timestamp: number             // When the annotation was created
 
-  // Drawing data (varies by type)
-  points?: Point[]              // Freehand: array of {x, y} points
-  start?: Point                 // Arrow/Rectangle: start point
-  end?: Point                   // Arrow/Rectangle: end point
-  center?: Point                // Circle: center point
-  radius?: number               // Circle: radius in pixels
+  coordinates: {
+    start?: Point               // Arrow/Rectangle: start point
+    end?: Point                 // Arrow/Rectangle: end point
+    center?: Point              // Circle: center point
+    radius?: number             // Circle: radius in pixels
+    path?: Point[]              // Freehand: array of {x, y} points
+  }
 
-  // Timeline association (for context)
-  associatedEffect?: string     // ID of effect this annotation overlaps
-  associatedTrack?: number      // Track index (0-based)
+  affectedEffects: string[]     // IDs of effects this annotation overlaps
+  color?: string                // Hex color (e.g., '#FF4444')
+  strokeWidth?: number          // Stroke width in pixels
+  drawnAtTimecode?: number      // Timecode when annotation was created
 }
 ```
 
@@ -279,8 +278,8 @@ The DrawingManager provides a helper to convert annotations to human-readable te
 import {omnislate} from "../context/context.js"
 
 function serializeAnnotationsForPrompt() {
-  const {state, compositor} = omnislate.context
-  const {drawingManager} = compositor.managers
+  const {state, controllers} = omnislate.context
+  const {drawingManager} = controllers.compositor.managers
 
   // Get natural language descriptions
   const descriptions = drawingManager.serializeAnnotationsForAI(state)
@@ -304,8 +303,8 @@ Example of combining annotations with user text:
 import {omnislate} from "../context/context.js"
 
 async function buildAIPrompt(userPrompt: string) {
-  const {state, compositor} = omnislate.context
-  const {drawingManager} = compositor.managers
+  const {state, controllers} = omnislate.context
+  const {drawingManager} = controllers.compositor.managers
 
   // Get timeline state
   const effects = state.effects
@@ -340,62 +339,62 @@ import type {Annotation} from "../context/types.js"
 
 function analyzeAnnotationSpatially(annotation: Annotation) {
   const {state} = omnislate.context
+  const {coordinates, affectedEffects} = annotation
 
   switch (annotation.type) {
     case 'arrow':
-      if (annotation.start && annotation.end) {
-        const dx = annotation.end.x - annotation.start.x
-        const dy = annotation.end.y - annotation.start.y
+      if (coordinates.start && coordinates.end) {
+        const dx = coordinates.end.x - coordinates.start.x
+        const dy = coordinates.end.y - coordinates.start.y
         const length = Math.sqrt(dx * dx + dy * dy)
         const angle = Math.atan2(dy, dx) * (180 / Math.PI)
 
         return {
           direction: getDirectionFromAngle(angle),
           length: Math.round(length),
-          fromEffect: annotation.associatedEffect,
-          // You can detect what the arrow points TO by checking end point
+          affectedEffects,
         }
       }
       break
 
     case 'rectangle':
-      if (annotation.start && annotation.end) {
-        const width = Math.abs(annotation.end.x - annotation.start.x)
-        const height = Math.abs(annotation.end.y - annotation.start.y)
+      if (coordinates.start && coordinates.end) {
+        const width = Math.abs(coordinates.end.x - coordinates.start.x)
+        const height = Math.abs(coordinates.end.y - coordinates.start.y)
         const area = width * height
 
         return {
           dimensions: {width: Math.round(width), height: Math.round(height)},
           area: Math.round(area),
-          coveredEffect: annotation.associatedEffect
+          affectedEffects
         }
       }
       break
 
     case 'circle':
-      if (annotation.center && annotation.radius) {
-        const area = Math.PI * annotation.radius * annotation.radius
+      if (coordinates.center && coordinates.radius) {
+        const area = Math.PI * coordinates.radius * coordinates.radius
 
         return {
-          radius: Math.round(annotation.radius),
+          radius: Math.round(coordinates.radius),
           area: Math.round(area),
-          centerPoint: annotation.center,
-          highlightedEffect: annotation.associatedEffect
+          centerPoint: coordinates.center,
+          affectedEffects
         }
       }
       break
 
     case 'freehand':
-      if (annotation.points && annotation.points.length > 0) {
+      if (coordinates.path && coordinates.path.length > 0) {
         // Analyze freehand gesture
-        const bounds = getFreehandBounds(annotation.points)
-        const isClosed = isPathClosed(annotation.points)
+        const bounds = getFreehandBounds(coordinates.path)
+        const isClosed = isPathClosed(coordinates.path)
 
         return {
-          pointCount: annotation.points.length,
+          pointCount: coordinates.path.length,
           bounds,
           isClosed,
-          crossedEffects: [annotation.associatedEffect] // Could expand to multiple
+          affectedEffects
         }
       }
       break
@@ -453,7 +452,7 @@ async function handleAIPrompt(userText: string) {
   }
 
   // 2. Serialize for AI
-  const annotationContext = compositor.managers.drawingManager
+  const annotationContext = controllers.compositor.managers.drawingManager
     .serializeAnnotationsForAI(state)
 
   // 3. Build prompt
@@ -543,13 +542,13 @@ set_annotations(annotations: Annotation[])
 
 5. **Get annotations:**
    ```typescript
-   const annotations = omnislate.context.compositor.managers.drawingManager.getAnnotations()
+   const annotations = omnislate.context.controllers.compositor.managers.drawingManager.getAnnotations()
    console.log(annotations)
    ```
 
 6. **Serialize for AI:**
    ```typescript
-   const descriptions = omnislate.context.compositor.managers.drawingManager
+   const descriptions = omnislate.context.controllers.compositor.managers.drawingManager
      .serializeAnnotationsForAI(omnislate.context.state)
    console.log(descriptions)
    ```
@@ -571,7 +570,7 @@ omnislate.context.actions.set_drawing_mode(true, 'arrow', '#FF0000', 3)
 console.log('Annotations:', omnislate.context.state.annotations)
 
 // Serialize
-const descriptions = omnislate.context.compositor.managers.drawingManager
+const descriptions = omnislate.context.controllers.compositor.managers.drawingManager
   .serializeAnnotationsForAI(omnislate.context.state)
 console.log('Descriptions:', descriptions)
 
@@ -608,7 +607,7 @@ omnislate.context.actions.set_drawing_mode(false)
 - Ensure canvas is rendered: `document.querySelector('canvas')`
 
 ### Annotations don't appear
-- Check annotation layer exists: `compositor.managers.drawingManager`
+- Check annotation layer exists: `controllers.compositor.managers.drawingManager`
 - Verify annotations in state: `omnislate.context.state.annotations`
 - Check z-index: annotation layer should be at `zIndex: 10000`
 
@@ -619,7 +618,7 @@ omnislate.context.actions.set_drawing_mode(false)
 
 ### Serialization returns empty
 - Confirm annotations exist in state
-- Check `associatedEffect` is populated
+- Check `affectedEffects` is populated
 - Verify effects are loaded in state
 
 ---
