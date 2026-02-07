@@ -629,6 +629,7 @@ export class Compositor {
     const relatedTransitions = transitions.filter(
       (t) => t.incoming.id === effect.id || t.outgoing.id === effect.id
     )
+    const { width: stageW, height: stageH } = this._getState().settings
     for (const transition of relatedTransitions) {
       const transitionStart =
         transition.outgoing.start_at_position +
@@ -639,7 +640,7 @@ export class Compositor {
         Math.min(1, (timecode - transitionStart) / transition.duration)
       )
       if (progress > 0 && progress < 1) {
-        this.transitionManager.applyTransition(transition, progress)
+        this.transitionManager.applyTransition(transition, progress, stageW, stageH)
       }
     }
   }

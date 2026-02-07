@@ -4,14 +4,20 @@ import { useEditorStore } from "../../lib/store"
 import { ProjectSettings } from "./project-settings"
 import { FilterPanel } from "./filters/filter-panel"
 import { AnimationPanel } from "./animations/animation-panel"
-import { TransitionPanel } from "./transitions/transition-panel"
+import { TrimPanel } from "./trim/trim-panel"
 import { TextPanel } from "./text/text-panel"
-import { Settings, Sliders, Sparkles, ArrowRightLeft, Music } from "lucide-react"
+import { Settings, Sliders, Sparkles, Scissors, Music } from "lucide-react"
+import type { VideoEffect, AudioEffect } from "../../lib/types"
 
-const visualSubTabs = [
+const videoSubTabs = [
+  { id: "trim" as const, label: "Trim", icon: Scissors },
   { id: "filters" as const, label: "Filters", icon: Sliders },
   { id: "animations" as const, label: "Animations", icon: Sparkles },
-  { id: "transitions" as const, label: "Transitions", icon: ArrowRightLeft },
+]
+
+const imageSubTabs = [
+  { id: "filters" as const, label: "Filters", icon: Sliders },
+  { id: "animations" as const, label: "Animations", icon: Sparkles },
 ]
 
 export function InspectorPanel() {
@@ -32,38 +38,15 @@ export function InspectorPanel() {
     )
   }
 
-  // Audio — minimal display
+  // Audio — trim + info
   if (selectedEffect.kind === "audio") {
     return (
       <div className="h-full overflow-y-auto bg-bg-raised">
         <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border-subtle">
           <Music size={14} className="text-clip-audio" />
-          <span className="text-xs font-medium text-text-secondary">Audio</span>
+          <span className="text-xs font-medium text-text-secondary">Audio: {selectedEffect.name}</span>
         </div>
-        <div className="p-3 space-y-3">
-          <div>
-            <label className="text-text-tertiary text-xs">Name</label>
-            <p className="text-text-primary text-sm mt-1">{selectedEffect.name}</p>
-          </div>
-          <div>
-            <label className="text-text-tertiary text-xs">Duration</label>
-            <p className="text-text-primary text-sm mt-1">
-              {(selectedEffect.duration / 1000).toFixed(2)}s
-            </p>
-          </div>
-          <div>
-            <label className="text-text-tertiary text-xs">Start</label>
-            <p className="text-text-primary text-sm mt-1">
-              {(selectedEffect.start / 1000).toFixed(2)}s
-            </p>
-          </div>
-          <div>
-            <label className="text-text-tertiary text-xs">End</label>
-            <p className="text-text-primary text-sm mt-1">
-              {(selectedEffect.end / 1000).toFixed(2)}s
-            </p>
-          </div>
-        </div>
+        <TrimPanel effect={selectedEffect as AudioEffect} />
       </div>
     )
   }
@@ -81,9 +64,16 @@ export function InspectorPanel() {
     )
   }
 
-  // Video / Image — tabbed: Filters | Animations | Transitions
-  const kindColor = selectedEffect.kind === "video" ? "bg-clip-video" : "bg-clip-image"
-  const kindLabel = selectedEffect.kind === "video" ? "Video" : "Image"
+  // Video / Image — tabbed
+  const isVideo = selectedEffect.kind === "video"
+  const kindColor = isVideo ? "bg-clip-video" : "bg-clip-image"
+  const kindLabel = isVideo ? "Video" : "Image"
+  const tabs = isVideo ? videoSubTabs : imageSubTabs
+
+  // Default to first available tab if current tab isn't available
+  const activeTab = tabs.some((t) => t.id === inspectorSubTab)
+    ? inspectorSubTab
+    : tabs[0].id
 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-bg-raised">
@@ -97,8 +87,8 @@ export function InspectorPanel() {
 
       {/* Sub-tabs */}
       <div className="flex border-b border-border-subtle shrink-0">
-        {visualSubTabs.map((tab) => {
-          const active = inspectorSubTab === tab.id
+        {tabs.map((tab) => {
+          const active = activeTab === tab.id
           const Icon = tab.icon
           return (
             <button
@@ -119,9 +109,11 @@ export function InspectorPanel() {
 
       {/* Tab content */}
       <div className="flex-1 overflow-y-auto">
-        {inspectorSubTab === "filters" && <FilterPanel effect={selectedEffect} />}
-        {inspectorSubTab === "animations" && <AnimationPanel effect={selectedEffect} />}
-        {inspectorSubTab === "transitions" && <TransitionPanel effect={selectedEffect} />}
+        {activeTab === "trim" && isVideo && (
+          <TrimPanel effect={selectedEffect as VideoEffect} />
+        )}
+        {activeTab === "filters" && <FilterPanel effect={selectedEffect} />}
+        {activeTab === "animations" && <AnimationPanel effect={selectedEffect} />}
       </div>
     </div>
   )

@@ -4,7 +4,7 @@ export type RightPanelTab = "inspector" | "settings"
 export interface UIState {
   leftPanelTab: LeftPanelTab
   rightPanelTab: RightPanelTab
-  inspectorSubTab: "filters" | "animations" | "transitions" | "text"
+  inspectorSubTab: "trim" | "filters" | "animations" | "text"
   isExportModalOpen: boolean
 }
 
