@@ -116,6 +116,17 @@ export function useCompositor(canvasRef: RefObject<HTMLCanvasElement | null>) {
         // Re-compose at current timecode to reflect changes
         compositor.seekTo(state.timecode)
       }
+
+      // Sync transform handles with selection
+      if (state.selected_effect !== prevState.selected_effect) {
+        if (!state.selected_effect) {
+          compositor.transformHandles.hide()
+        } else if ("rect" in state.selected_effect) {
+          const r = (state.selected_effect as { id: string; rect: { position_on_canvas: { x: number; y: number }; width: number; height: number } })
+          compositor.transformHandles.show(r.id, r.rect.position_on_canvas.x, r.rect.position_on_canvas.y, r.rect.width, r.rect.height)
+        }
+        compositor.app?.render()
+      }
     })
 
     return unsubscribe

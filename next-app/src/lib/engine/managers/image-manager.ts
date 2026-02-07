@@ -13,18 +13,30 @@ export class ImageManager {
     this._stage = stage
   }
 
-  async addImage(effect: ImageEffect, file: File): Promise<void> {
-    if (this._entries.has(effect.id)) return
+  async addImage(effect: ImageEffect, file: File): Promise<{ imgWidth: number; imgHeight: number } | null> {
+    if (this._entries.has(effect.id)) return null
 
     const PIXI = await import("pixi.js")
 
     const objectUrl = URL.createObjectURL(file)
 
-    // Load the texture using PIXI.Assets
-    const texture = await PIXI.Assets.load<import("pixi.js").Texture>(objectUrl)
-    const sprite = new PIXI.Sprite({ texture })
+    // Load image into an HTMLImageElement first, then create texture from it
+    const img = new Image()
+    img.crossOrigin = "anonymous"
+    img.src = objectUrl
 
-    this._applyRect(sprite, effect.rect)
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve()
+      img.onerror = () => reject(new Error(`Failed to load image for effect ${effect.id}`))
+    })
+
+    const source = new PIXI.ImageSource({ resource: img })
+    const texture = new PIXI.Texture({ source })
+    const sprite = new PIXI.Sprite(texture)
+
+    // Native size — compositor will apply fitToFrame after load
+    sprite.width = img.naturalWidth
+    sprite.height = img.naturalHeight
 
     if (this._stage) {
       this._stage.addChild(sprite)
@@ -33,6 +45,8 @@ export class ImageManager {
     sprite.visible = false
 
     this._entries.set(effect.id, { sprite, objectUrl })
+
+    return { imgWidth: img.naturalWidth, imgHeight: img.naturalHeight }
   }
 
   showImage(effectId: string): void {
@@ -70,7 +84,6 @@ export class ImageManager {
 
   private _applyRect(sprite: import("pixi.js").Sprite, rect: EffectRect): void {
     sprite.position.set(rect.position_on_canvas.x, rect.position_on_canvas.y)
-    sprite.scale.set(rect.scaleX, rect.scaleY)
     sprite.rotation = rect.rotation
     sprite.pivot.set(rect.pivot.x, rect.pivot.y)
     sprite.width = rect.width * rect.scaleX

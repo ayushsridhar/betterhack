@@ -4,24 +4,10 @@ import { useCallback } from "react"
 import { useEditorStore } from "../store"
 import { generateId } from "../utils/id"
 import { findPlaceForNewEffect } from "../utils/effect-placement"
+import { fitToFrame } from "../utils/fit-to-frame"
 import { getFile } from "../services/media-db"
+import { getVideoMetadata, getImageDimensions } from "../services/media-info"
 import type { DragEndEvent } from "@dnd-kit/core"
-import type {
-  VideoEffect,
-  AudioEffect,
-  ImageEffect,
-  EffectRect,
-} from "../types"
-
-const DEFAULT_RECT: EffectRect = {
-  width: 1920,
-  height: 1080,
-  scaleX: 1,
-  scaleY: 1,
-  position_on_canvas: { x: 0, y: 0 },
-  rotation: 0,
-  pivot: { x: 0.5, y: 0.5 },
-}
 
 export function useTimelineDrag() {
   const zoom = useEditorStore((s) => s.zoom)
@@ -66,12 +52,15 @@ export function useTimelineDrag() {
           0
         )
 
+        const { width: projW, height: projH } = state.settings
+
         if (kind === "video") {
-          // Look up media from IndexedDB for metadata
           let durationMs = 5000
           let frames = 150
           let thumbnail = ""
           let name = "Video"
+          let mediaW = 1920
+          let mediaH = 1080
           try {
             const media = await getFile(hash)
             if (media && media.kind === "video") {
@@ -79,10 +68,13 @@ export function useTimelineDrag() {
               frames = media.frames
               thumbnail = media.thumbnail
               name = media.file.name
+              mediaW = media.width || 1920
+              mediaH = media.height || 1080
             }
           } catch {
             // Use defaults
           }
+          const rect = fitToFrame(mediaW, mediaH, projW, projH)
           addVideoEffect({
             id,
             kind: "video",
@@ -94,7 +86,7 @@ export function useTimelineDrag() {
             thumbnail,
             raw_duration: durationMs,
             frames,
-            rect: { ...DEFAULT_RECT },
+            rect,
             file_hash: hash,
             name,
           })
@@ -122,12 +114,19 @@ export function useTimelineDrag() {
         } else if (kind === "image") {
           const durationMs = 5000
           let name = "Image"
+          let mediaW = 1920
+          let mediaH = 1080
           try {
             const media = await getFile(hash)
-            if (media) name = media.file.name
+            if (media && media.kind === "image") {
+              name = media.file.name
+              mediaW = media.width || 1920
+              mediaH = media.height || 1080
+            }
           } catch {
             // Use defaults
           }
+          const rect = fitToFrame(mediaW, mediaH, projW, projH)
           addImageEffect({
             id,
             kind: "image",
@@ -136,7 +135,7 @@ export function useTimelineDrag() {
             end: durationMs,
             duration: durationMs,
             track: targetTrackIndex,
-            rect: { ...DEFAULT_RECT },
+            rect,
             file_hash: hash,
             name,
           })

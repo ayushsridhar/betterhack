@@ -5,23 +5,14 @@ import { Search } from "lucide-react"
 import { useMediaLibrary } from "../../lib/hooks/use-media-library"
 import { useEditorStore } from "../../lib/store"
 import { generateId } from "../../lib/utils/id"
-import type { AnyMedia, VideoEffect, AudioEffect, ImageEffect, EffectRect } from "../../lib/types"
+import { fitToFrame } from "../../lib/utils/fit-to-frame"
+import type { AnyMedia, VideoEffect, AudioEffect, ImageEffect } from "../../lib/types"
 import { ImportButton } from "./import-button"
 import { MediaGrid } from "./media-grid"
 import { DropZone } from "./drop-zone"
 import { EmptyState } from "./empty-state"
 
 type FilterKind = "all" | "video" | "audio" | "image"
-
-const DEFAULT_RECT: EffectRect = {
-  width: 1920,
-  height: 1080,
-  scaleX: 1,
-  scaleY: 1,
-  position_on_canvas: { x: 0, y: 0 },
-  rotation: 0,
-  pivot: { x: 0.5, y: 0.5 },
-}
 
 export function MediaPanel() {
   const { files, importFile, deleteFile } = useMediaLibrary()
@@ -66,9 +57,12 @@ export function MediaPanel() {
         track: 0,
       }
 
+      const { width: projW, height: projH } = useEditorStore.getState().settings
+
       if (media.kind === "video") {
         const durationMs = media.duration * 1000
         const thumbnail = media.thumbnail ?? ""
+        const rect = fitToFrame(media.width || projW, media.height || projH, projW, projH)
         addVideoEffect({
           ...baseEffect,
           kind: "video",
@@ -77,12 +71,11 @@ export function MediaPanel() {
           duration: durationMs,
           end: durationMs,
           frames: media.frames,
-          rect: { ...DEFAULT_RECT },
+          rect,
           file_hash: media.hash,
           name: media.file.name,
         } satisfies VideoEffect)
       } else if (media.kind === "audio") {
-        // For audio, use a default 10s duration since we don't extract audio duration yet
         const durationMs = 10000
         addAudioEffect({
           ...baseEffect,
@@ -94,13 +87,14 @@ export function MediaPanel() {
           name: media.file.name,
         } satisfies AudioEffect)
       } else if (media.kind === "image") {
-        const durationMs = 5000 // Default 5s for images
+        const durationMs = 5000
+        const rect = fitToFrame(media.width || projW, media.height || projH, projW, projH)
         addImageEffect({
           ...baseEffect,
           kind: "image",
           duration: durationMs,
           end: durationMs,
-          rect: { ...DEFAULT_RECT },
+          rect,
           file_hash: media.hash,
           name: media.file.name,
         } satisfies ImageEffect)

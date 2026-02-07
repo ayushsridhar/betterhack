@@ -8,7 +8,7 @@ import {
   deleteFile as dbDeleteFile,
   countByHash,
 } from "../services/media-db"
-import { getVideoMetadata } from "../services/media-info"
+import { getVideoMetadata, getImageDimensions } from "../services/media-info"
 
 async function hashFile(file: File): Promise<string> {
   const buffer = await file.arrayBuffer()
@@ -121,6 +121,8 @@ export function useMediaLibrary() {
         frames: metadata.frames,
         proxy: false,
         thumbnail,
+        width: metadata.width || 1920,
+        height: metadata.height || 1080,
       } satisfies VideoFile
     } else if (kind === "audio") {
       media = {
@@ -129,10 +131,21 @@ export function useMediaLibrary() {
         hash,
       } satisfies AudioFile
     } else {
+      let imgW = 1920
+      let imgH = 1080
+      try {
+        const dims = await getImageDimensions(file)
+        imgW = dims.width
+        imgH = dims.height
+      } catch {
+        // Use defaults
+      }
       media = {
         kind: "image",
         file,
         hash,
+        width: imgW,
+        height: imgH,
       } satisfies ImageFile
     }
 

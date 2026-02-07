@@ -17,7 +17,9 @@ import { AudioManager } from "./managers/audio-manager"
 import { FilterManager } from "./managers/filter-manager"
 import { AnimationManager } from "./managers/animation-manager"
 import { TransitionManager } from "./managers/transition-manager"
+import { TransformHandles } from "./transform-handles"
 import { getFile } from "../services/media-db"
+import { fitToFrame } from "../utils/fit-to-frame"
 
 type GetState = () => EditorStore
 type SetState = (fn: (state: EditorStore) => void) => void
@@ -47,6 +49,7 @@ export class Compositor {
   readonly filterManager = new FilterManager()
   readonly animationManager = new AnimationManager()
   readonly transitionManager = new TransitionManager()
+  readonly transformHandles = new TransformHandles()
 
   // Track which effects are currently visible so we can show/hide efficiently
   private _visibleEffects = new Set<string>()
@@ -109,10 +112,40 @@ export class Compositor {
       }
     }
 
+    // Enable stage interactivity
+    this._app.stage.eventMode = "static"
+    this._app.stage.hitArea = this._app.screen
+
+    // Deselect on background click
+    this._app.stage.on("pointerdown", (e) => {
+      if (e.target === this._app!.stage) {
+        this._setState((s) => { s.selected_effect = null })
+        this.transformHandles.hide()
+        this._app!.render()
+      }
+    })
+
     // Give managers access to the stage
     this.videoManager.setStage(this._app.stage)
     this.imageManager.setStage(this._app.stage)
     this.textManager.setStage(this._app.stage)
+
+    // Initialize transform handles
+    await this.transformHandles.init(this._app.stage)
+    this.transformHandles.setOnUpdate((id, rect) => {
+      this._setState((s) => {
+        const effect = s.effects.find((e) => e.id === id)
+        if (effect && "rect" in effect) {
+          const visual = effect as { rect: { position_on_canvas: { x: number; y: number }; width: number; height: number } }
+          visual.rect.position_on_canvas.x = rect.x
+          visual.rect.position_on_canvas.y = rect.y
+          visual.rect.width = rect.width
+          visual.rect.height = rect.height
+        }
+      })
+      // Re-compose to update sprite position
+      this.compose(this._getState().timecode)
+    })
 
     this._isInitialized = true
 
@@ -210,6 +243,16 @@ export class Compositor {
 
     this._visibleEffects = newVisible
 
+    // Update transform handles if a visual effect is selected
+    const selectedId = state.selected_effect?.id
+    if (selectedId && this.transformHandles.targetId === selectedId) {
+      const sel = effects.find((e) => e.id === selectedId)
+      if (sel && "rect" in sel) {
+        const r = (sel as { rect: { position_on_canvas: { x: number; y: number }; width: number; height: number } }).rect
+        this.transformHandles.show(selectedId, r.position_on_canvas.x, r.position_on_canvas.y, r.width, r.height)
+      }
+    }
+
     // Render the frame
     this._app.render()
   }
@@ -238,6 +281,7 @@ export class Compositor {
     this.filterManager.destroy()
     this.animationManager.destroy()
     this.transitionManager.destroy()
+    this.transformHandles.destroy()
 
     if (this._app) {
       this._app.destroy(false, { children: true })
@@ -263,18 +307,42 @@ export class Compositor {
     this._loadingEffects.add(effect.id)
 
     try {
+      const { width: projW, height: projH } = this._getState().settings
+
       switch (effect.kind) {
         case "video": {
           const media = await getFile(effect.file_hash)
           if (media) {
-            await this.videoManager.addVideo(effect, media.file)
+            const dims = await this.videoManager.addVideo(effect, media.file)
+            // Auto-fit to frame using actual video dimensions
+            if (dims) {
+              const rect = fitToFrame(dims.videoWidth, dims.videoHeight, projW, projH)
+              this.videoManager.updateRect(effect.id, rect)
+              // Write corrected rect back to store
+              this._setState((s) => {
+                const eff = s.effects.find((e) => e.id === effect.id)
+                if (eff && "rect" in eff) {
+                  (eff as VideoEffect).rect = rect
+                }
+              })
+            }
           }
           break
         }
         case "image": {
           const media = await getFile(effect.file_hash)
           if (media) {
-            await this.imageManager.addImage(effect, media.file)
+            const dims = await this.imageManager.addImage(effect, media.file)
+            if (dims) {
+              const rect = fitToFrame(dims.imgWidth, dims.imgHeight, projW, projH)
+              this.imageManager.updateRect(effect.id, rect)
+              this._setState((s) => {
+                const eff = s.effects.find((e) => e.id === effect.id)
+                if (eff && "rect" in eff) {
+                  (eff as ImageEffect).rect = rect
+                }
+              })
+            }
           }
           break
         }
@@ -293,6 +361,9 @@ export class Compositor {
       this._loadedEffects.add(effect.id)
       this._loadingEffects.delete(effect.id)
 
+      // Make the sprite interactive for selection
+      this._makeEffectInteractive(effect)
+
       // Re-compose to show the newly loaded effect
       if (this._isInitialized && this._app) {
         this.compose(this._getState().timecode)
@@ -303,6 +374,53 @@ export class Compositor {
       this._loadingEffects.delete(effect.id)
       return false
     }
+  }
+
+  /**
+   * Make a loaded effect's sprite clickable for selection.
+   */
+  private _makeEffectInteractive(effect: AnyEffect): void {
+    let displayObject: import("pixi.js").Container | null = null
+
+    switch (effect.kind) {
+      case "video":
+        displayObject = this.videoManager.getSprite(effect.id)
+        break
+      case "image":
+        displayObject = this.imageManager.getSprite(effect.id)
+        break
+      case "text":
+        displayObject = this.textManager.getDisplayObject(effect.id)
+        break
+    }
+
+    if (!displayObject) return
+
+    displayObject.eventMode = "static"
+    displayObject.cursor = "pointer"
+
+    displayObject.on("pointerdown", (e: import("pixi.js").FederatedPointerEvent) => {
+      e.stopPropagation()
+
+      // Select this effect
+      const fullEffect = this._getState().effects.find((e) => e.id === effect.id)
+      if (fullEffect) {
+        this._setState((s) => { s.selected_effect = fullEffect })
+      }
+
+      // Show transform handles
+      if (fullEffect && "rect" in fullEffect) {
+        const rect = (fullEffect as { rect: { position_on_canvas: { x: number; y: number }; width: number; height: number } }).rect
+        this.transformHandles.show(
+          effect.id,
+          rect.position_on_canvas.x,
+          rect.position_on_canvas.y,
+          rect.width,
+          rect.height
+        )
+        this._app?.render()
+      }
+    })
   }
 
   /**

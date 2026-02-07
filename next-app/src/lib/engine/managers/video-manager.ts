@@ -4,6 +4,9 @@ interface VideoEntry {
   sprite: import("pixi.js").Sprite
   video: HTMLVideoElement
   objectUrl: string
+  offscreenCanvas: HTMLCanvasElement
+  offscreenCtx: CanvasRenderingContext2D
+  source: import("pixi.js").CanvasSource
 }
 
 export class VideoManager {
@@ -14,8 +17,16 @@ export class VideoManager {
     this._stage = stage
   }
 
-  async addVideo(effect: VideoEffect, file: File): Promise<void> {
-    if (this._entries.has(effect.id)) return
+  /**
+   * Load a video, render its first frame onto an offscreen canvas,
+   * and create a PIXI sprite from that canvas texture.
+   * Returns the native video dimensions.
+   */
+  async addVideo(
+    effect: VideoEffect,
+    file: File
+  ): Promise<{ videoWidth: number; videoHeight: number } | null> {
+    if (this._entries.has(effect.id)) return null
 
     const PIXI = await import("pixi.js")
 
@@ -23,22 +34,44 @@ export class VideoManager {
     video.preload = "auto"
     video.muted = true
     video.playsInline = true
-    video.crossOrigin = "anonymous"
 
     const objectUrl = URL.createObjectURL(file)
     video.src = objectUrl
 
-    // Wait for video to be loadable
     await new Promise<void>((resolve, reject) => {
       video.onloadeddata = () => resolve()
-      video.onerror = () => reject(new Error(`Failed to load video for effect ${effect.id}`))
+      video.onerror = () =>
+        reject(new Error(`Failed to load video for effect ${effect.id}`))
     })
 
-    const source = new PIXI.VideoSource({ resource: video, autoPlay: false, autoLoad: false })
-    const texture = new PIXI.Texture({ source })
-    const sprite = new PIXI.Sprite({ texture })
+    const videoWidth = video.videoWidth || 1920
+    const videoHeight = video.videoHeight || 1080
 
-    this._applyRect(sprite, effect.rect)
+    // Seek to first frame
+    video.currentTime = 0.01
+    await new Promise<void>((resolve) => {
+      video.onseeked = () => resolve()
+      setTimeout(resolve, 500)
+    })
+
+    // Create offscreen canvas at native video resolution
+    const offscreenCanvas = document.createElement("canvas")
+    offscreenCanvas.width = videoWidth
+    offscreenCanvas.height = videoHeight
+    const offscreenCtx = offscreenCanvas.getContext("2d")!
+
+    // Draw initial frame
+    offscreenCtx.drawImage(video, 0, 0, videoWidth, videoHeight)
+
+    // Use CanvasSource — fully reliable, no VideoSource quirks
+    const source = new PIXI.CanvasSource({ resource: offscreenCanvas })
+    const texture = new PIXI.Texture({ source })
+    const sprite = new PIXI.Sprite(texture)
+
+    // Don't use effect.rect — it may be stale/wrong.
+    // Just set native size; compositor will apply fitToFrame after.
+    sprite.width = videoWidth
+    sprite.height = videoHeight
 
     if (this._stage) {
       this._stage.addChild(sprite)
@@ -46,31 +79,39 @@ export class VideoManager {
 
     sprite.visible = false
 
-    this._entries.set(effect.id, { sprite, video, objectUrl })
+    this._entries.set(effect.id, {
+      sprite,
+      video,
+      objectUrl,
+      offscreenCanvas,
+      offscreenCtx,
+      source,
+    })
+
+    return { videoWidth, videoHeight }
   }
 
   updateVideo(effectId: string, timecode: number, effect: VideoEffect): void {
     const entry = this._entries.get(effectId)
     if (!entry) return
 
-    // Calculate the position within the source media
-    // timecode is global; effect.start is the in-point in the source media
     const localTime = timecode - effect.start_at_position
     const sourceTime = effect.start + localTime
     const sourceTimeSec = sourceTime / 1000
 
-    // Only seek if the difference is significant to avoid constant seeking
-    if (Math.abs(entry.video.currentTime - sourceTimeSec) > 0.05) {
+    if (Math.abs(entry.video.currentTime - sourceTimeSec) > 0.04) {
       entry.video.currentTime = sourceTimeSec
     }
 
-    // Notify PIXI that the video texture source needs updating.
-    // VideoSource automatically handles frame updates when connected to the ticker,
-    // but when scrubbing we need to signal that the source has changed.
-    const source = entry.sprite.texture.source
-    if (source) {
-      source.emit("update", source)
-    }
+    // Redraw current video frame onto the offscreen canvas and tell PIXI
+    entry.offscreenCtx.drawImage(
+      entry.video,
+      0,
+      0,
+      entry.offscreenCanvas.width,
+      entry.offscreenCanvas.height
+    )
+    entry.source.update()
   }
 
   showVideo(effectId: string): void {
@@ -86,9 +127,7 @@ export class VideoManager {
   playVideo(effectId: string): void {
     const entry = this._entries.get(effectId)
     if (entry && entry.video.paused) {
-      entry.video.play().catch(() => {
-        // Autoplay may be blocked; silently handle
-      })
+      entry.video.play().catch(() => {})
     }
   }
 
@@ -132,9 +171,11 @@ export class VideoManager {
     if (entry) this._applyRect(entry.sprite, rect)
   }
 
-  private _applyRect(sprite: import("pixi.js").Sprite, rect: EffectRect): void {
+  private _applyRect(
+    sprite: import("pixi.js").Sprite,
+    rect: EffectRect
+  ): void {
     sprite.position.set(rect.position_on_canvas.x, rect.position_on_canvas.y)
-    sprite.scale.set(rect.scaleX, rect.scaleY)
     sprite.rotation = rect.rotation
     sprite.pivot.set(rect.pivot.x, rect.pivot.y)
     sprite.width = rect.width * rect.scaleX

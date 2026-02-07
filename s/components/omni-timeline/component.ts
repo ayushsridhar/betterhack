@@ -70,6 +70,34 @@ export const OmniTimeline = shadow_component(use => {
 		effect_drag_over(event)
 	}
 
+	const handleTimelineDragOver = (e: DragEvent) => {
+		if (e.dataTransfer?.types.includes("application/x-omni-media")) {
+			e.preventDefault()
+			e.dataTransfer.dropEffect = "copy"
+		}
+	}
+
+	const handleTimelineDrop = async (e: DragEvent) => {
+		e.preventDefault()
+		const data = e.dataTransfer?.getData("application/x-omni-media")
+		if (!data) return
+		const {kind, hash} = JSON.parse(data)
+		const media = use.context.controllers.media
+		const managers = use.context.controllers.compositor.managers
+		const mediaFile = media.get(hash)
+		if (!mediaFile) return
+		if (kind === "video" && mediaFile.kind === "video") {
+			const [video] = await media.create_video_elements([mediaFile])
+			managers.videoManager.create_and_add_video_effect(video, use.context.state)
+		} else if (kind === "image" && mediaFile.kind === "image") {
+			const [image] = media.create_image_elements([mediaFile])
+			managers.imageManager.create_and_add_image_effect(image, use.context.state)
+		} else if (kind === "audio" && mediaFile.kind === "audio") {
+			const [audio] = media.create_audio_elements([mediaFile])
+			managers.audioManager.create_and_add_audio_effect(audio, use.context.state)
+		}
+	}
+
 	const render_tracks = () => repeat(use.context.state.tracks, ((_track, i) => Track([i], {attrs: {part: "add-track-indicator"}})))
 	const render_effects = () => repeat(use.context.state.effects, (effect) => effect.id, (effect) => {
 		if(effect.kind === "audio") {
@@ -115,7 +143,10 @@ export const OmniTimeline = shadow_component(use => {
 				<div class="track-sidebars">
 					${use.context.state.tracks.map((t, i) => html`${TrackSidebar([i, t.id])}`)}
 				</div>
-				<div class=timeline-relative>
+				<div class=timeline-relative
+					@dragover=${handleTimelineDragOver}
+					@drop=${handleTimelineDrop}
+				>
 					${renderTimelineInfo()}
 					${Playhead([use.element])}
 					${!noEffects ? render_tracks() : null}

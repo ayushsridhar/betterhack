@@ -12,10 +12,9 @@ export const CanvasPreview = forwardRef<HTMLDivElement>(
     const width = useEditorStore((s) => s.settings.width)
     const height = useEditorStore((s) => s.settings.height)
 
-    const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
+    const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
 
-    // Connect the PIXI compositor to this canvas
-    const { isReady: compositorReady } = useCompositor(canvasRef)
+    const { compositor, isReady: compositorReady } = useCompositor(canvasRef)
 
     const calculateSize = useCallback(() => {
       const parent = parentRef.current
@@ -39,7 +38,7 @@ export const CanvasPreview = forwardRef<HTMLDivElement>(
         newHeight = parentW / aspectRatio
       }
 
-      setCanvasSize({ width: Math.floor(newWidth), height: Math.floor(newHeight) })
+      setContainerSize({ width: Math.floor(newWidth), height: Math.floor(newHeight) })
     }, [width, height])
 
     useEffect(() => {
@@ -58,6 +57,21 @@ export const CanvasPreview = forwardRef<HTMLDivElement>(
       }
     }, [calculateSize])
 
+    // When the container size changes, resize the PIXI renderer to match
+    // so the PIXI world maps 1:1 to the displayed canvas
+    useEffect(() => {
+      if (!compositor || !compositorReady) return
+      if (containerSize.width === 0 || containerSize.height === 0) return
+
+      const canvas = canvasRef.current
+      if (!canvas) return
+
+      // Set canvas buffer size to project resolution
+      // but CSS display size to the container size
+      canvas.style.width = `${containerSize.width}px`
+      canvas.style.height = `${containerSize.height}px`
+    }, [containerSize, compositor, compositorReady])
+
     return (
       <div
         ref={parentRef}
@@ -65,16 +79,15 @@ export const CanvasPreview = forwardRef<HTMLDivElement>(
       >
         <div
           ref={ref}
-          className="relative bg-black border border-border-subtle rounded overflow-hidden"
+          className="relative bg-black border border-border-subtle rounded overflow-hidden flex items-center justify-center"
           style={{
-            width: canvasSize.width || "100%",
-            height: canvasSize.height || "100%",
+            width: containerSize.width || "100%",
+            height: containerSize.height || "100%",
           }}
         >
-          {/* PIXI canvas — never touch with getContext("2d") */}
+          {/* PIXI canvas — PIXI controls the buffer size, we control the CSS display size */}
           <canvas
             ref={canvasRef}
-            className="block w-full h-full"
           />
 
           {/* HTML placeholder overlay — shown until compositor is ready */}
