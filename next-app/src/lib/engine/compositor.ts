@@ -233,16 +233,13 @@ export class Compositor {
 
       const isTimeVisible = timecode >= effectStart && timecode < effectEnd
 
-      // Respect track mute/visibility flags
+      // Separate audio and visual permissions
       const track = tracks[effect.track]
       const isAudio = effect.kind === "audio"
-      const trackAllowed = track
-        ? isAudio
-          ? !track.muted
-          : track.visible && !track.muted
-        : true
+      const trackAllowedAudio = track ? !track.muted : true
+      const trackAllowedVisual = track ? track.visible : true
 
-      const isVisible = isTimeVisible && trackAllowed
+      const isVisible = isTimeVisible && (isAudio ? trackAllowedAudio : trackAllowedVisual)
 
       if (isVisible) {
         newVisible.add(effect.id)
@@ -250,12 +247,15 @@ export class Compositor {
         this._updateEffect(effect, timecode, filters, animations, transitions)
       } else {
         this._hideEffect(effect)
-        // For muted tracks, ensure audio is paused
-        if (isTimeVisible && !trackAllowed) {
-          if (isAudio) {
+        if (isTimeVisible) {
+          // Pause audio only when track is muted
+          if (isAudio && !trackAllowedAudio) {
             this.audioManager.pause(effect.id)
           }
-          this.videoManager.pauseVideo(effect.id)
+          // Pause video only when track is hidden
+          if (!trackAllowedVisual) {
+            this.videoManager.pauseVideo(effect.id)
+          }
         }
       }
     }

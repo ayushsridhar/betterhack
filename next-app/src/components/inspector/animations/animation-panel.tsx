@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useEditorStore } from "../../../lib/store"
 import { AnimationCard } from "./animation-card"
 import type {
@@ -48,9 +48,16 @@ export function AnimationPanel({ effect }: AnimationPanelProps) {
     effectAnimations.filter((a) => a.type === "out").map((a) => a.name)
   )
 
-  // Track duration in local state, initialized from first found animation or default 500
-  const initialDuration = effectAnimations.length > 0 ? effectAnimations[0].duration : 500
-  const [duration, setDuration] = useState(initialDuration)
+  // Track duration in local state
+  const [duration, setDuration] = useState(
+    effectAnimations.length > 0 ? effectAnimations[0].duration : 500
+  )
+
+  // Sync duration when the selected effect changes
+  useEffect(() => {
+    const newDuration = effectAnimations.length > 0 ? effectAnimations[0].duration : 500
+    setDuration(newDuration)
+  }, [effect.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleToggleIn = (name: AnimationInName) => {
     if (activeInNames.has(name)) {

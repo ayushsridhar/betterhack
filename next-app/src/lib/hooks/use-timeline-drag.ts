@@ -36,20 +36,20 @@ export function useTimelineDrag() {
         }
       }
 
+      // If dropped on the "Add Track" zone, create a new track first
+      // (works for both new media and existing clip moves)
+      if (over && over.id === "track-new") {
+        useEditorStore.getState().addTrack()
+        targetTrackIndex = useEditorStore.getState().tracks.length - 1
+      }
+
       // --- CASE 1: Media card dropped onto timeline ---
       if (activeId.startsWith("media-") && data?.hash) {
         const hash = data.hash as string
         const kind = data.kind as string
 
-        // Only handle if dropped onto a track (including "track-new")
+        // Only handle if dropped onto a track
         if (!over || !(over.id as string).startsWith("track-")) return
-
-        // If dropped on the "Add Track" zone, create a new track first
-        if (over.id === "track-new") {
-          useEditorStore.getState().addTrack()
-          // The new track is now at the end
-          targetTrackIndex = useEditorStore.getState().tracks.length - 1
-        }
 
         const state = useEditorStore.getState()
         const id = generateId()
