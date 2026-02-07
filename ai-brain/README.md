@@ -9,20 +9,20 @@ AI integration for visual annotation-based video editing in Omniclip.
 ```bash
 cd ai-brain
 npm install
-```text
+```
 
 ### 2. Set Up Environment
 
 ```bash
 cp .env.example .env
 # Edit .env and add your ANTHROPIC_API_KEY
-```text
+```
 
 ### 3. Run Development Server
 
 ```bash
 npm run dev
-```text
+```
 
 Server will start on `http://localhost:3001`
 
@@ -58,7 +58,7 @@ Process an AI edit request.
   },
   "sessionId": "optional-session-id"
 }
-```text
+```
 
 **Response:**
 ```json
@@ -82,7 +82,7 @@ Process an AI edit request.
   ],
   "sessionId": "generated-or-provided-session-id"
 }
-```text
+```
 
 ### GET `/api/history/:sessionId`
 
@@ -98,7 +98,7 @@ Health check endpoint.
 
 ## Architecture
 
-```text
+```
 Member 2 (UI)
     ↓ POST /api/ai-edit
 Member 4 (AI Brain - this module)
@@ -108,7 +108,7 @@ Member 4 (AI Brain - this module)
     └── History: Track Conversation & Edits
     ↓ MCP Calls
 Member 3 (MCP Server)
-```text
+```
 
 ## Default Annotation Behaviors
 
@@ -123,7 +123,7 @@ When no prompt is provided:
 
 ### File Structure
 
-```text
+```
 ai-brain/
 ├── src/
 │   ├── server.ts         # Express server
@@ -136,7 +136,7 @@ ai-brain/
 │   └── types.ts          # TypeScript types
 ├── package.json
 └── tsconfig.json
-```text
+```
 
 ### Testing
 
@@ -163,7 +163,7 @@ curl -X POST http://localhost:3001/api/ai-edit \
       "settings": {"width": 1920, "height": 1080, "bitrate": 5000, "aspectRatio": "16/9", "standard": "1080p"}
     }
   }'
-```text
+```
 
 ## MCP Integration
 

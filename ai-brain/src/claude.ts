@@ -33,8 +33,12 @@ export class ClaudeClient {
 		)
 
 		console.log('[Claude] Sending request...')
-		console.log('[Claude] User prompt:', userPrompt)
-		console.log('[Claude] Annotation context:', annotationContext)
+
+		// Only log sensitive data if DEBUG_CLAUDE is enabled
+		if (process.env.DEBUG_CLAUDE === 'true') {
+			console.log('[Claude] User prompt:', userPrompt)
+			console.log('[Claude] Annotation context:', annotationContext)
+		}
 
 		try {
 			const response = await this.client.messages.create({
@@ -54,7 +58,9 @@ export class ClaudeClient {
 				tools: mcpTools,
 			})
 
-			console.log('[Claude] Response received:', JSON.stringify(response, null, 2))
+			if (process.env.DEBUG_CLAUDE === 'true') {
+				console.log('[Claude] Response received:', JSON.stringify(response, null, 2))
+			}
 
 			// Extract tool calls from response
 			const mcpCalls = this.extractToolCalls(response)
@@ -157,9 +163,16 @@ Based on the annotations and request, what editing operations should be performe
 	 */
 	private extractToolCalls(response: Anthropic.Message): MCPCall[] {
 		const mcpCalls: MCPCall[] = []
+		const allowedTools = new Set(mcpTools.map(t => t.name))
 
 		for (const block of response.content) {
 			if (block.type === 'tool_use') {
+				// Validate tool name against allowed list to prevent hallucinated tools
+				if (!allowedTools.has(block.name)) {
+					console.warn(`[Claude] Ignoring unsupported tool: ${block.name}`)
+					continue
+				}
+
 				mcpCalls.push({
 					tool: block.name as any,
 					params: block.input as Record<string, any>,

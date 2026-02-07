@@ -9,20 +9,20 @@ Edit `.env` and add your API key:
 ```bash
 ANTHROPIC_API_KEY=sk-ant-api03-...
 PORT=3001
-```text
+```
 
 ### 2. Start the Server
 
 ```bash
 npm run dev
-```text
+```
 
 You should see:
-```text
+```
 🧠 AI Brain server running on http://localhost:3001
 📡 Ready to receive edit requests at POST /api/ai-edit
 💚 Health check available at GET /health
-```text
+```
 
 ### 3. Test It
 
@@ -30,7 +30,7 @@ In a new terminal:
 
 ```bash
 ./test.sh
-```text
+```
 
 This will send a test request with:
 - An arrow annotation between two clips
@@ -59,7 +59,7 @@ Expected response:
   ],
   "sessionId": "..."
 }
-```text
+```
 
 ## Integration Instructions
 
@@ -110,7 +110,7 @@ if (result.success) {
 } else {
   // Show error: result.error
 }
-```text
+```
 
 ### For Member 3 (MCP Server)
 
@@ -126,7 +126,7 @@ omnislate.context.actions.add_transition({
   duration: params.duration,
   direction: params.direction,
 })
-```text
+```
 
 #### `modify_effect(effectId, properties)`
 ```javascript
@@ -135,7 +135,7 @@ omnislate.context.actions.modify_effect(
   params.effectId,
   params.properties
 )
-```text
+```
 
 #### `add_filter(effectId, filterType, intensity)`
 ```javascript
@@ -145,7 +145,7 @@ omnislate.context.actions.add_filter({
   type: params.filterType,
   params: { intensity: params.intensity },
 })
-```text
+```
 
 #### `add_animation(effectId, animationType, duration, params?)`
 ```javascript
@@ -156,7 +156,7 @@ omnislate.context.actions.add_animation({
   duration: params.duration,
   params: params.params || {},
 })
-```text
+```
 
 #### Other tools:
 - `split_clip(effectId, timestamp)` → `actions.split_effect()`
@@ -179,7 +179,7 @@ async execute(call: MCPCall): Promise<MCPResult> {
 
   return await response.json()
 }
-```text
+```
 
 Or if same process:
 
@@ -188,7 +188,7 @@ async execute(call: MCPCall): Promise<MCPResult> {
   // Direct function call
   return await mcpServer.execute(call)
 }
-```text
+```
 
 ## API Reference
 
@@ -204,7 +204,7 @@ Main endpoint for processing AI edits.
   timelineState: TimelineState,
   sessionId?: string  // for conversation history
 }
-```text
+```
 
 **Response:**
 ```typescript
@@ -214,7 +214,7 @@ Main endpoint for processing AI edits.
   sessionId: string,
   error?: string
 }
-```text
+```
 
 ### GET `/api/history/:sessionId`
 
@@ -230,7 +230,7 @@ Health check.
 
 ## Architecture Flow
 
-```text
+```
 User draws arrow between clips
     ↓
 User right-clicks → prompt: "fade transition"
@@ -250,7 +250,7 @@ Member 2 shows accept/reject dialog
     ↓ (if accepted)
 Member 3 (MCP Server)
     └─ Execute tool calls → Update Omniclip timeline
-```text
+```
 
 ## Default Behaviors (No Prompt)
 
@@ -265,7 +265,7 @@ Member 3 (MCP Server)
 
 The server logs all requests and Claude responses:
 
-```text
+```
 [Orchestrator] Processing edit request...
 [Orchestrator] Session ID: abc-123
 [Orchestrator] Annotations: 1
@@ -277,7 +277,7 @@ The server logs all requests and Claude responses:
 [Claude] Extracted MCP calls: [...]
 [MCP Client] Executing add_transition: {...}
 [Orchestrator] Edit completed successfully
-```text
+```
 
 ### Test with cURL
 
@@ -285,7 +285,7 @@ The server logs all requests and Claude responses:
 curl -X POST http://localhost:3001/api/ai-edit \
   -H "Content-Type: application/json" \
   -d @test-request.json | jq .
-```text
+```
 
 ## Troubleshooting
 

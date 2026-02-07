@@ -7,6 +7,14 @@ import { SessionHistory, ConversationMessage, EditHistoryEntry } from './types.j
 
 export class HistoryManager {
 	private sessions: Map<string, SessionHistory> = new Map()
+	private cleanupInterval: NodeJS.Timeout | null = null
+
+	constructor() {
+		// Schedule periodic cleanup every 30 minutes
+		this.cleanupInterval = setInterval(() => {
+			this.cleanupOldSessions()
+		}, 30 * 60 * 1000) // 30 minutes
+	}
 
 	/**
 	 * Get or create a session
@@ -78,10 +86,26 @@ export class HistoryManager {
 		const now = Date.now()
 		const maxAge = 24 * 60 * 60 * 1000 // 24 hours
 
+		let cleanedCount = 0
 		for (const [sessionId, session] of this.sessions.entries()) {
 			if (now - session.lastUpdated > maxAge) {
 				this.sessions.delete(sessionId)
+				cleanedCount++
 			}
+		}
+
+		if (cleanedCount > 0) {
+			console.log(`[HistoryManager] Cleaned up ${cleanedCount} old sessions`)
+		}
+	}
+
+	/**
+	 * Dispose and cleanup resources
+	 */
+	dispose(): void {
+		if (this.cleanupInterval) {
+			clearInterval(this.cleanupInterval)
+			this.cleanupInterval = null
 		}
 	}
 }
