@@ -1,7 +1,4 @@
-<p align="center"><img width="300" src="./assets/icon2.png"/></p>
-<h1 align="center">Picasso Platforms</h1>
 <img width="545" height="538" alt="Screenshot 2026-02-07 at 3 08 49 PM" src="https://github.com/user-attachments/assets/e672cdd3-f0c2-4e44-a815-fee2aaa9bd42" />
-<p align="center">AI-powered video editing in your browser</p>
 
 ## Introduction
 Picasso Platforms is a browser-based video editor with a built-in MCP (Model Context Protocol) server that lets AI assistants directly control the editing timeline. No accounts, no uploads, no subscriptions — everything runs locally in your browser.
