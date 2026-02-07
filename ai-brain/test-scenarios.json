@@ -1,0 +1,440 @@
+{
+  "scenarios": [
+    {
+      "name": "Simple Arrow Transition",
+      "description": "Basic arrow between two clips with transition prompt",
+      "request": {
+        "annotations": [
+          {
+            "type": "arrow",
+            "coordinates": {
+              "start": { "x": 100, "y": 200 },
+              "end": { "x": 400, "y": 200 }
+            },
+            "affectedEffects": ["clip-1", "clip-2"]
+          }
+        ],
+        "prompt": "smooth slide transition to the right, 500ms",
+        "timelineState": {
+          "effects": [
+            {
+              "id": "clip-1",
+              "kind": "video",
+              "name": "intro.mp4",
+              "track": 0,
+              "start_at_position": 0,
+              "duration": 5000,
+              "start": 0,
+              "end": 5000,
+              "thumbnail": "",
+              "raw_duration": 5000,
+              "frames": 120,
+              "file_hash": "hash1",
+              "rect": {
+                "width": 1920,
+                "height": 1080,
+                "scaleX": 1,
+                "scaleY": 1,
+                "position_on_canvas": { "x": 0, "y": 0 },
+                "rotation": 0,
+                "pivot": { "x": 0, "y": 0 }
+              }
+            },
+            {
+              "id": "clip-2",
+              "kind": "video",
+              "name": "main.mp4",
+              "track": 0,
+              "start_at_position": 5000,
+              "duration": 10000,
+              "start": 0,
+              "end": 10000,
+              "thumbnail": "",
+              "raw_duration": 10000,
+              "frames": 240,
+              "file_hash": "hash2",
+              "rect": {
+                "width": 1920,
+                "height": 1080,
+                "scaleX": 1,
+                "scaleY": 1,
+                "position_on_canvas": { "x": 0, "y": 0 },
+                "rotation": 0,
+                "pivot": { "x": 0, "y": 0 }
+              }
+            }
+          ],
+          "tracks": [
+            {
+              "id": "track-1",
+              "locked": false,
+              "visible": true,
+              "muted": false
+            }
+          ],
+          "transitions": [],
+          "filters": [],
+          "animations": [],
+          "settings": {
+            "width": 1920,
+            "height": 1080,
+            "bitrate": 5000,
+            "aspectRatio": "16/9",
+            "standard": "1080p"
+          }
+        }
+      }
+    },
+    {
+      "name": "Arrow Without Prompt (Default Behavior)",
+      "description": "Test default arrow behavior without explicit prompt",
+      "request": {
+        "annotations": [
+          {
+            "type": "arrow",
+            "coordinates": {
+              "start": { "x": 100, "y": 200 },
+              "end": { "x": 400, "y": 200 }
+            },
+            "affectedEffects": ["clip-1", "clip-2"]
+          }
+        ],
+        "prompt": "",
+        "timelineState": {
+          "effects": [
+            {
+              "id": "clip-1",
+              "kind": "video",
+              "name": "intro.mp4",
+              "track": 0,
+              "start_at_position": 0,
+              "duration": 5000,
+              "start": 0,
+              "end": 5000,
+              "thumbnail": "",
+              "raw_duration": 5000,
+              "frames": 120,
+              "file_hash": "hash1",
+              "rect": {
+                "width": 1920,
+                "height": 1080,
+                "scaleX": 1,
+                "scaleY": 1,
+                "position_on_canvas": { "x": 0, "y": 0 },
+                "rotation": 0,
+                "pivot": { "x": 0, "y": 0 }
+              }
+            },
+            {
+              "id": "clip-2",
+              "kind": "video",
+              "name": "demo.mp4",
+              "track": 0,
+              "start_at_position": 5000,
+              "duration": 8000,
+              "start": 0,
+              "end": 8000,
+              "thumbnail": "",
+              "raw_duration": 8000,
+              "frames": 192,
+              "file_hash": "hash2",
+              "rect": {
+                "width": 1920,
+                "height": 1080,
+                "scaleX": 1,
+                "scaleY": 1,
+                "position_on_canvas": { "x": 0, "y": 0 },
+                "rotation": 0,
+                "pivot": { "x": 0, "y": 0 }
+              }
+            }
+          ],
+          "tracks": [
+            {
+              "id": "track-1",
+              "locked": false,
+              "visible": true,
+              "muted": false
+            }
+          ],
+          "transitions": [],
+          "filters": [],
+          "animations": [],
+          "settings": {
+            "width": 1920,
+            "height": 1080,
+            "bitrate": 5000,
+            "aspectRatio": "16/9",
+            "standard": "1080p"
+          }
+        }
+      }
+    },
+    {
+      "name": "Rectangle Selection with Filter",
+      "description": "Rectangle selecting a clip with filter prompt",
+      "request": {
+        "annotations": [
+          {
+            "type": "rectangle",
+            "coordinates": {
+              "start": { "x": 100, "y": 150 },
+              "end": { "x": 300, "y": 250 }
+            },
+            "affectedEffects": ["clip-1"]
+          }
+        ],
+        "prompt": "apply a blur filter with 70% intensity",
+        "timelineState": {
+          "effects": [
+            {
+              "id": "clip-1",
+              "kind": "video",
+              "name": "background.mp4",
+              "track": 0,
+              "start_at_position": 0,
+              "duration": 10000,
+              "start": 0,
+              "end": 10000,
+              "thumbnail": "",
+              "raw_duration": 10000,
+              "frames": 240,
+              "file_hash": "hash1",
+              "rect": {
+                "width": 1920,
+                "height": 1080,
+                "scaleX": 1,
+                "scaleY": 1,
+                "position_on_canvas": { "x": 0, "y": 0 },
+                "rotation": 0,
+                "pivot": { "x": 0, "y": 0 }
+              }
+            }
+          ],
+          "tracks": [
+            {
+              "id": "track-1",
+              "locked": false,
+              "visible": true,
+              "muted": false
+            }
+          ],
+          "transitions": [],
+          "filters": [],
+          "animations": [],
+          "settings": {
+            "width": 1920,
+            "height": 1080,
+            "bitrate": 5000,
+            "aspectRatio": "16/9",
+            "standard": "1080p"
+          }
+        }
+      }
+    },
+    {
+      "name": "Multiple Operations",
+      "description": "Complex request requiring multiple edits",
+      "request": {
+        "annotations": [
+          {
+            "type": "arrow",
+            "coordinates": {
+              "start": { "x": 100, "y": 200 },
+              "end": { "x": 300, "y": 200 }
+            },
+            "affectedEffects": ["clip-1", "clip-2"]
+          },
+          {
+            "type": "circle",
+            "coordinates": {
+              "start": { "x": 400, "y": 200 },
+              "end": { "x": 500, "y": 250 }
+            },
+            "affectedEffects": ["clip-3"]
+          }
+        ],
+        "prompt": "add a fade transition between the first two clips, and add a zoom in animation to the third clip",
+        "timelineState": {
+          "effects": [
+            {
+              "id": "clip-1",
+              "kind": "video",
+              "name": "intro.mp4",
+              "track": 0,
+              "start_at_position": 0,
+              "duration": 3000,
+              "start": 0,
+              "end": 3000,
+              "thumbnail": "",
+              "raw_duration": 3000,
+              "frames": 72,
+              "file_hash": "hash1",
+              "rect": {
+                "width": 1920,
+                "height": 1080,
+                "scaleX": 1,
+                "scaleY": 1,
+                "position_on_canvas": { "x": 0, "y": 0 },
+                "rotation": 0,
+                "pivot": { "x": 0, "y": 0 }
+              }
+            },
+            {
+              "id": "clip-2",
+              "kind": "video",
+              "name": "main.mp4",
+              "track": 0,
+              "start_at_position": 3000,
+              "duration": 5000,
+              "start": 0,
+              "end": 5000,
+              "thumbnail": "",
+              "raw_duration": 5000,
+              "frames": 120,
+              "file_hash": "hash2",
+              "rect": {
+                "width": 1920,
+                "height": 1080,
+                "scaleX": 1,
+                "scaleY": 1,
+                "position_on_canvas": { "x": 0, "y": 0 },
+                "rotation": 0,
+                "pivot": { "x": 0, "y": 0 }
+              }
+            },
+            {
+              "id": "clip-3",
+              "kind": "video",
+              "name": "outro.mp4",
+              "track": 0,
+              "start_at_position": 8000,
+              "duration": 4000,
+              "start": 0,
+              "end": 4000,
+              "thumbnail": "",
+              "raw_duration": 4000,
+              "frames": 96,
+              "file_hash": "hash3",
+              "rect": {
+                "width": 1920,
+                "height": 1080,
+                "scaleX": 1,
+                "scaleY": 1,
+                "position_on_canvas": { "x": 0, "y": 0 },
+                "rotation": 0,
+                "pivot": { "x": 0, "y": 0 }
+              }
+            }
+          ],
+          "tracks": [
+            {
+              "id": "track-1",
+              "locked": false,
+              "visible": true,
+              "muted": false
+            }
+          ],
+          "transitions": [],
+          "filters": [],
+          "animations": [],
+          "settings": {
+            "width": 1920,
+            "height": 1080,
+            "bitrate": 5000,
+            "aspectRatio": "16/9",
+            "standard": "1080p"
+          }
+        }
+      }
+    },
+    {
+      "name": "Text Effects",
+      "description": "Working with text clips",
+      "request": {
+        "annotations": [
+          {
+            "type": "circle",
+            "coordinates": {
+              "start": { "x": 200, "y": 100 },
+              "end": { "x": 400, "y": 200 }
+            },
+            "affectedEffects": ["text-1"]
+          }
+        ],
+        "prompt": "make the text fade in over 1 second",
+        "timelineState": {
+          "effects": [
+            {
+              "id": "text-1",
+              "kind": "text",
+              "text": "Welcome",
+              "fontSize": 48,
+              "track": 1,
+              "start_at_position": 0,
+              "duration": 3000,
+              "start": 0,
+              "end": 3000,
+              "rect": {
+                "width": 400,
+                "height": 100,
+                "scaleX": 1,
+                "scaleY": 1,
+                "position_on_canvas": { "x": 760, "y": 490 },
+                "rotation": 0,
+                "pivot": { "x": 0, "y": 0 }
+              }
+            },
+            {
+              "id": "clip-1",
+              "kind": "video",
+              "name": "background.mp4",
+              "track": 0,
+              "start_at_position": 0,
+              "duration": 10000,
+              "start": 0,
+              "end": 10000,
+              "thumbnail": "",
+              "raw_duration": 10000,
+              "frames": 240,
+              "file_hash": "hash1",
+              "rect": {
+                "width": 1920,
+                "height": 1080,
+                "scaleX": 1,
+                "scaleY": 1,
+                "position_on_canvas": { "x": 0, "y": 0 },
+                "rotation": 0,
+                "pivot": { "x": 0, "y": 0 }
+              }
+            }
+          ],
+          "tracks": [
+            {
+              "id": "track-1",
+              "locked": false,
+              "visible": true,
+              "muted": false
+            },
+            {
+              "id": "track-2",
+              "locked": false,
+              "visible": true,
+              "muted": false
+            }
+          ],
+          "transitions": [],
+          "filters": [],
+          "animations": [],
+          "settings": {
+            "width": 1920,
+            "height": 1080,
+            "bitrate": 5000,
+            "aspectRatio": "16/9",
+            "standard": "1080p"
+          }
+        }
+      }
+    }
+  ]
+}

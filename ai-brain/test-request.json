@@ -1,0 +1,82 @@
+{
+  "annotations": [
+    {
+      "type": "arrow",
+      "coordinates": {
+        "start": { "x": 100, "y": 200 },
+        "end": { "x": 400, "y": 200 }
+      },
+      "affectedEffects": ["clip-1", "clip-2"],
+      "color": "#ff0000"
+    }
+  ],
+  "prompt": "smooth slide transition to the right, 500ms",
+  "timelineState": {
+    "effects": [
+      {
+        "id": "clip-1",
+        "kind": "video",
+        "name": "intro.mp4",
+        "track": 0,
+        "start_at_position": 0,
+        "duration": 5000,
+        "start": 0,
+        "end": 5000,
+        "thumbnail": "",
+        "raw_duration": 5000,
+        "frames": 120,
+        "file_hash": "hash1",
+        "rect": {
+          "width": 1920,
+          "height": 1080,
+          "scaleX": 1,
+          "scaleY": 1,
+          "position_on_canvas": { "x": 0, "y": 0 },
+          "rotation": 0,
+          "pivot": { "x": 0, "y": 0 }
+        }
+      },
+      {
+        "id": "clip-2",
+        "kind": "video",
+        "name": "main.mp4",
+        "track": 0,
+        "start_at_position": 5000,
+        "duration": 10000,
+        "start": 0,
+        "end": 10000,
+        "thumbnail": "",
+        "raw_duration": 10000,
+        "frames": 240,
+        "file_hash": "hash2",
+        "rect": {
+          "width": 1920,
+          "height": 1080,
+          "scaleX": 1,
+          "scaleY": 1,
+          "position_on_canvas": { "x": 0, "y": 0 },
+          "rotation": 0,
+          "pivot": { "x": 0, "y": 0 }
+        }
+      }
+    ],
+    "tracks": [
+      {
+        "id": "track-1",
+        "locked": false,
+        "visible": true,
+        "muted": false
+      }
+    ],
+    "transitions": [],
+    "filters": [],
+    "animations": [],
+    "settings": {
+      "width": 1920,
+      "height": 1080,
+      "bitrate": 5000,
+      "aspectRatio": "16/9",
+      "standard": "1080p"
+    }
+  }
+}

@@ -1,0 +1,376 @@
+{
+  "scenarios": [
+    {
+      "name": "Empty Timeline",
+      "description": "Should handle empty timeline gracefully",
+      "request": {
+        "annotations": [
+          {
+            "type": "arrow",
+            "coordinates": {
+              "start": { "x": 100, "y": 200 },
+              "end": { "x": 400, "y": 200 }
+            },
+            "affectedEffects": []
+          }
+        ],
+        "prompt": "add transition",
+        "timelineState": {
+          "effects": [],
+          "tracks": [],
+          "transitions": [],
+          "filters": [],
+          "animations": [],
+          "settings": {
+            "width": 1920,
+            "height": 1080,
+            "bitrate": 5000,
+            "aspectRatio": "16/9",
+            "standard": "1080p"
+          }
+        }
+      }
+    },
+    {
+      "name": "Invalid Effect ID",
+      "description": "References non-existent clip",
+      "request": {
+        "annotations": [
+          {
+            "type": "rectangle",
+            "coordinates": {
+              "start": { "x": 100, "y": 200 },
+              "end": { "x": 400, "y": 200 }
+            },
+            "affectedEffects": ["nonexistent-id"]
+          }
+        ],
+        "prompt": "apply blur filter",
+        "timelineState": {
+          "effects": [
+            {
+              "id": "clip-1",
+              "kind": "video",
+              "name": "test.mp4",
+              "track": 0,
+              "start_at_position": 0,
+              "duration": 5000,
+              "start": 0,
+              "end": 5000,
+              "thumbnail": "",
+              "raw_duration": 5000,
+              "frames": 120,
+              "file_hash": "hash1",
+              "rect": {
+                "width": 1920,
+                "height": 1080,
+                "scaleX": 1,
+                "scaleY": 1,
+                "position_on_canvas": { "x": 0, "y": 0 },
+                "rotation": 0,
+                "pivot": { "x": 0, "y": 0 }
+              }
+            }
+          ],
+          "tracks": [{"id": "track-1", "locked": false, "visible": true, "muted": false}],
+          "transitions": [],
+          "filters": [],
+          "animations": [],
+          "settings": {
+            "width": 1920,
+            "height": 1080,
+            "bitrate": 5000,
+            "aspectRatio": "16/9",
+            "standard": "1080p"
+          }
+        }
+      }
+    },
+    {
+      "name": "Ambiguous Prompt",
+      "description": "Vague instructions to test interpretation",
+      "request": {
+        "annotations": [
+          {
+            "type": "circle",
+            "coordinates": {
+              "start": { "x": 100, "y": 200 },
+              "end": { "x": 400, "y": 200 }
+            },
+            "affectedEffects": ["clip-1"]
+          }
+        ],
+        "prompt": "make it better",
+        "timelineState": {
+          "effects": [
+            {
+              "id": "clip-1",
+              "kind": "video",
+              "name": "test.mp4",
+              "track": 0,
+              "start_at_position": 0,
+              "duration": 5000,
+              "start": 0,
+              "end": 5000,
+              "thumbnail": "",
+              "raw_duration": 5000,
+              "frames": 120,
+              "file_hash": "hash1",
+              "rect": {
+                "width": 1920,
+                "height": 1080,
+                "scaleX": 1,
+                "scaleY": 1,
+                "position_on_canvas": { "x": 0, "y": 0 },
+                "rotation": 0,
+                "pivot": { "x": 0, "y": 0 }
+              }
+            }
+          ],
+          "tracks": [{"id": "track-1", "locked": false, "visible": true, "muted": false}],
+          "transitions": [],
+          "filters": [],
+          "animations": [],
+          "settings": {
+            "width": 1920,
+            "height": 1080,
+            "bitrate": 5000,
+            "aspectRatio": "16/9",
+            "standard": "1080p"
+          }
+        }
+      }
+    },
+    {
+      "name": "Very Long Prompt",
+      "description": "Test handling of verbose instructions",
+      "request": {
+        "annotations": [
+          {
+            "type": "arrow",
+            "coordinates": {
+              "start": { "x": 100, "y": 200 },
+              "end": { "x": 400, "y": 200 }
+            },
+            "affectedEffects": ["clip-1", "clip-2"]
+          }
+        ],
+        "prompt": "I want to create a really smooth and professional looking transition between these two clips. The transition should be a slide effect that goes from left to right, and it should take exactly 750 milliseconds to complete. Make sure it looks cinematic and polished, like something you'd see in a high-budget production. The transition needs to be smooth and not jarring at all.",
+        "timelineState": {
+          "effects": [
+            {
+              "id": "clip-1",
+              "kind": "video",
+              "name": "intro.mp4",
+              "track": 0,
+              "start_at_position": 0,
+              "duration": 5000,
+              "start": 0,
+              "end": 5000,
+              "thumbnail": "",
+              "raw_duration": 5000,
+              "frames": 120,
+              "file_hash": "hash1",
+              "rect": {
+                "width": 1920,
+                "height": 1080,
+                "scaleX": 1,
+                "scaleY": 1,
+                "position_on_canvas": { "x": 0, "y": 0 },
+                "rotation": 0,
+                "pivot": { "x": 0, "y": 0 }
+              }
+            },
+            {
+              "id": "clip-2",
+              "kind": "video",
+              "name": "main.mp4",
+              "track": 0,
+              "start_at_position": 5000,
+              "duration": 10000,
+              "start": 0,
+              "end": 10000,
+              "thumbnail": "",
+              "raw_duration": 10000,
+              "frames": 240,
+              "file_hash": "hash2",
+              "rect": {
+                "width": 1920,
+                "height": 1080,
+                "scaleX": 1,
+                "scaleY": 1,
+                "position_on_canvas": { "x": 0, "y": 0 },
+                "rotation": 0,
+                "pivot": { "x": 0, "y": 0 }
+              }
+            }
+          ],
+          "tracks": [{"id": "track-1", "locked": false, "visible": true, "muted": false}],
+          "transitions": [],
+          "filters": [],
+          "animations": [],
+          "settings": {
+            "width": 1920,
+            "height": 1080,
+            "bitrate": 5000,
+            "aspectRatio": "16/9",
+            "standard": "1080p"
+          }
+        }
+      }
+    },
+    {
+      "name": "Audio Clip",
+      "description": "Test with audio effects",
+      "request": {
+        "annotations": [
+          {
+            "type": "circle",
+            "coordinates": {
+              "start": { "x": 100, "y": 200 },
+              "end": { "x": 400, "y": 200 }
+            },
+            "affectedEffects": ["audio-1"]
+          }
+        ],
+        "prompt": "fade in the audio over 2 seconds",
+        "timelineState": {
+          "effects": [
+            {
+              "id": "audio-1",
+              "kind": "audio",
+              "name": "background-music.mp3",
+              "track": 0,
+              "start_at_position": 0,
+              "duration": 30000,
+              "start": 0,
+              "end": 30000,
+              "raw_duration": 30000,
+              "file_hash": "audio-hash"
+            }
+          ],
+          "tracks": [{"id": "track-1", "locked": false, "visible": true, "muted": false}],
+          "transitions": [],
+          "filters": [],
+          "animations": [],
+          "settings": {
+            "width": 1920,
+            "height": 1080,
+            "bitrate": 5000,
+            "aspectRatio": "16/9",
+            "standard": "1080p"
+          }
+        }
+      }
+    },
+    {
+      "name": "Multiple Tracks",
+      "description": "Complex multi-track scenario",
+      "request": {
+        "annotations": [
+          {
+            "type": "arrow",
+            "coordinates": {
+              "start": { "x": 100, "y": 100 },
+              "end": { "x": 400, "y": 100 }
+            },
+            "affectedEffects": ["video-1", "video-2"]
+          },
+          {
+            "type": "circle",
+            "coordinates": {
+              "start": { "x": 100, "y": 300 },
+              "end": { "x": 300, "y": 400 }
+            },
+            "affectedEffects": ["text-1"]
+          }
+        ],
+        "prompt": "fade transition on video track, fade in on text",
+        "timelineState": {
+          "effects": [
+            {
+              "id": "video-1",
+              "kind": "video",
+              "name": "clip1.mp4",
+              "track": 0,
+              "start_at_position": 0,
+              "duration": 5000,
+              "start": 0,
+              "end": 5000,
+              "thumbnail": "",
+              "raw_duration": 5000,
+              "frames": 120,
+              "file_hash": "hash1",
+              "rect": {
+                "width": 1920,
+                "height": 1080,
+                "scaleX": 1,
+                "scaleY": 1,
+                "position_on_canvas": { "x": 0, "y": 0 },
+                "rotation": 0,
+                "pivot": { "x": 0, "y": 0 }
+              }
+            },
+            {
+              "id": "video-2",
+              "kind": "video",
+              "name": "clip2.mp4",
+              "track": 0,
+              "start_at_position": 5000,
+              "duration": 5000,
+              "start": 0,
+              "end": 5000,
+              "thumbnail": "",
+              "raw_duration": 5000,
+              "frames": 120,
+              "file_hash": "hash2",
+              "rect": {
+                "width": 1920,
+                "height": 1080,
+                "scaleX": 1,
+                "scaleY": 1,
+                "position_on_canvas": { "x": 0, "y": 0 },
+                "rotation": 0,
+                "pivot": { "x": 0, "y": 0 }
+              }
+            },
+            {
+              "id": "text-1",
+              "kind": "text",
+              "text": "Title",
+              "fontSize": 48,
+              "track": 1,
+              "start_at_position": 0,
+              "duration": 3000,
+              "start": 0,
+              "end": 3000,
+              "rect": {
+                "width": 400,
+                "height": 100,
+                "scaleX": 1,
+                "scaleY": 1,
+                "position_on_canvas": { "x": 760, "y": 490 },
+                "rotation": 0,
+                "pivot": { "x": 0, "y": 0 }
+              }
+            }
+          ],
+          "tracks": [
+            {"id": "track-1", "locked": false, "visible": true, "muted": false},
+            {"id": "track-2", "locked": false, "visible": true, "muted": false}
+          ],
+          "transitions": [],
+          "filters": [],
+          "animations": [],
+          "settings": {
+            "width": 1920,
+            "height": 1080,
+            "bitrate": 5000,
+            "aspectRatio": "16/9",
+            "standard": "1080p"
+          }
+        }
+      }
+    }
+  ]
+}
