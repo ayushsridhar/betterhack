@@ -3,7 +3,10 @@
 import { useRef } from "react"
 import { DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core"
 import { useTimelineDrag } from "../../lib/hooks/use-timeline-drag"
+import { useEditorStore } from "../../lib/store"
+import type { LeftPanelTab } from "../../lib/store/slices/ui"
 import { MediaPanel } from "../media/media-panel"
+import { TextMediaPanel } from "../media/text-media-panel"
 import { CanvasPreview } from "../preview/canvas-preview"
 import { PlaybackControls } from "../preview/playback-controls"
 import { TimecodeDisplay } from "../preview/timecode-display"
@@ -12,9 +15,16 @@ import { Timeline } from "../timeline/timeline"
 import { ExportModal } from "../export/export-modal"
 import { EditorHeader } from "./editor-header"
 
+const leftTabs: { value: LeftPanelTab; label: string }[] = [
+  { value: "media", label: "Media" },
+  { value: "text", label: "Text" },
+]
+
 export function EditorLayout() {
   const previewContainerRef = useRef<HTMLDivElement>(null)
   const { onDragEnd } = useTimelineDrag()
+  const leftPanelTab = useEditorStore((s) => s.leftPanelTab)
+  const setLeftPanelTab = useEditorStore((s) => s.setLeftPanelTab)
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -38,9 +48,30 @@ export function EditorLayout() {
             background: "var(--color-border-subtle)",
           }}
         >
-          {/* Left panel - Media */}
-          <div className="bg-bg-raised overflow-hidden">
-            <MediaPanel />
+          {/* Left panel - Media / Text */}
+          <div className="bg-bg-raised overflow-hidden flex flex-col">
+            {/* Tab bar */}
+            <div className="flex items-center gap-1 px-2 pt-1.5 pb-0 bg-bg-base border-b border-border-subtle">
+              {leftTabs.map((tab) => (
+                <button
+                  key={tab.value}
+                  onClick={() => setLeftPanelTab(tab.value)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-t transition-colors ${
+                    leftPanelTab === tab.value
+                      ? "bg-bg-raised text-text-primary"
+                      : "text-text-tertiary hover:text-text-secondary"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Panel content */}
+            <div className="flex-1 overflow-hidden">
+              {leftPanelTab === "media" && <MediaPanel />}
+              {leftPanelTab === "text" && <TextMediaPanel />}
+            </div>
           </div>
 
           {/* Center panel - Preview */}

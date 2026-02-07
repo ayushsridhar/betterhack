@@ -38,6 +38,18 @@ export class FrameEncoder {
       )
     }
 
+    // Close existing encoder if re-initializing
+    if (this.encoder) {
+      try {
+        if (this.encoder.state !== "closed") {
+          this.encoder.close()
+        }
+      } catch {
+        // Ignore close errors on stale encoder
+      }
+      this.encoder = null
+    }
+
     this.chunks = []
     this.frameCount = 0
 

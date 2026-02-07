@@ -1,10 +1,10 @@
-export type LeftPanelTab = "media" | "templates"
+export type LeftPanelTab = "media" | "text"
 export type RightPanelTab = "inspector" | "settings"
 
 export interface UIState {
   leftPanelTab: LeftPanelTab
   rightPanelTab: RightPanelTab
-  inspectorSubTab: "filters" | "animations" | "transitions" | "text"
+  inspectorSubTab: "trim" | "filters" | "animations" | "text"
   isExportModalOpen: boolean
 }
 

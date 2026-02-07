@@ -29,6 +29,12 @@ export function useEffectTrim(effectId: string, side: "left" | "right") {
       const initialStartPosition = effect.start_at_position
       const scale = Math.pow(2, zoom)
 
+      // Get the max source duration for video/audio clips
+      const rawDuration =
+        "raw_duration" in effect
+          ? (effect as { raw_duration: number }).raw_duration
+          : Infinity
+
       const onPointerMove = (ev: PointerEvent) => {
         if (!isDragging.current) return
         const deltaPixels = ev.clientX - startX.current
@@ -36,15 +42,18 @@ export function useEffectTrim(effectId: string, side: "left" | "right") {
 
         if (side === "left") {
           const newStart = Math.max(0, initialStart + deltaTime)
-          const maxStart = initialEnd - 1 // Minimum 1ms duration
+          const maxStart = initialEnd - 100 // Minimum 100ms duration
           const clampedStart = Math.min(newStart, maxStart)
           const startDelta = clampedStart - initialStart
           setEffectStart(effectId, clampedStart)
           setEffectStartPosition(effectId, initialStartPosition + startDelta)
+          setEffectDuration(effectId, initialEnd - clampedStart)
         } else {
           const newEnd = initialEnd + deltaTime
-          const minEnd = initialStart + 1 // Minimum 1ms duration
-          const clampedEnd = Math.max(newEnd, minEnd)
+          const minEnd = initialStart + 100 // Minimum 100ms duration
+          // Clamp to source duration for video/audio
+          const maxEnd = rawDuration
+          const clampedEnd = Math.max(minEnd, Math.min(newEnd, maxEnd))
           setEffectEnd(effectId, clampedEnd)
           setEffectDuration(effectId, clampedEnd - initialStart)
         }

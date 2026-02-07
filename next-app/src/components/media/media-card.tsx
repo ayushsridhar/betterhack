@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState, useCallback } from "react"
+import { useRef, useState, useCallback, useMemo, useEffect } from "react"
 import { X, Plus, Film, Music, ImageIcon } from "lucide-react"
 import { useDraggable } from "@dnd-kit/core"
 import type { AnyMedia } from "../../lib/types"
@@ -20,6 +20,19 @@ function formatDuration(seconds: number): string {
 export function MediaCard({ media, onDelete, onAddToTimeline }: MediaCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const videoPreviewRef = useRef<HTMLVideoElement | null>(null)
+
+  // Memoize blob URL for image thumbnails
+  const imageBlobUrl = useMemo(
+    () => (media.kind === "image" ? URL.createObjectURL(media.file) : null),
+    [media.file]
+  )
+
+  // Revoke blob URL on unmount
+  useEffect(() => {
+    return () => {
+      if (imageBlobUrl) URL.revokeObjectURL(imageBlobUrl)
+    }
+  }, [imageBlobUrl])
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `media-${media.hash}`,
@@ -85,9 +98,9 @@ export function MediaCard({ media, onDelete, onAddToTimeline }: MediaCardProps) 
             className="w-full h-full object-cover"
             draggable={false}
           />
-        ) : media.kind === "image" ? (
+        ) : media.kind === "image" && imageBlobUrl ? (
           <img
-            src={URL.createObjectURL(media.file)}
+            src={imageBlobUrl}
             alt={media.file.name}
             className="w-full h-full object-cover"
             draggable={false}

@@ -44,13 +44,15 @@ export class ShortcutManager {
 
   handleKeyDown = (e: KeyboardEvent): void => {
     // Don't intercept shortcuts when user is typing in an input
-    const target = e.target as HTMLElement
-    if (
-      target.tagName === "INPUT" ||
-      target.tagName === "TEXTAREA" ||
-      target.isContentEditable
-    ) {
-      return
+    if (e.target && e.target instanceof HTMLElement) {
+      const target = e.target
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable
+      ) {
+        return
+      }
     }
 
     const combo = eventToCombo(e)

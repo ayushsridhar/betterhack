@@ -76,7 +76,7 @@ export function MediaPanel() {
           name: media.file.name,
         } satisfies VideoEffect)
       } else if (media.kind === "audio") {
-        const durationMs = 10000
+        const durationMs = media.duration > 0 ? media.duration * 1000 : 10000
         addAudioEffect({
           ...baseEffect,
           kind: "audio",

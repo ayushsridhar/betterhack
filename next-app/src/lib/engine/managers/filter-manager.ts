@@ -3,6 +3,9 @@ import type { Filter as AppFilter } from "../../types"
 type PixiContainer = import("pixi.js").Container
 type PixiFilter = import("pixi.js").Filter
 
+/** Extended filter with optional params for configurable filter values. */
+type FilterWithParams = AppFilter & { params?: Record<string, unknown> }
+
 /**
  * FilterManager applies PIXI filters to sprites/containers based on the
  * application's Filter type definitions.
@@ -19,7 +22,7 @@ type PixiFilter = import("pixi.js").Filter
 export class FilterManager {
   /**
    * Apply an array of application Filter definitions to a PIXI display object.
-   * Replaces any existing filters on the target.
+   * Replaces any existing filters on the target. Clears filters when the array is empty.
    */
   async applyFilters(
     target: PixiContainer,
@@ -33,7 +36,7 @@ export class FilterManager {
     const pixiFilters: PixiFilter[] = []
 
     for (const filter of filters) {
-      const pixiFilter = await this._createFilter(filter)
+      const pixiFilter = await this._createFilter(filter as FilterWithParams)
       if (pixiFilter) {
         pixiFilters.push(pixiFilter)
       }
@@ -49,18 +52,26 @@ export class FilterManager {
     target.filters = []
   }
 
-  private async _createFilter(filter: AppFilter): Promise<PixiFilter | null> {
+  private async _createFilter(filter: FilterWithParams): Promise<PixiFilter | null> {
     const PIXI = await import("pixi.js")
+    const params = filter.params ?? {}
 
     switch (filter.type) {
-      case "BlurFilter":
-        return new PIXI.BlurFilter({ strength: 8, quality: 4 })
+      case "BlurFilter": {
+        const strength = (params.strength as number | undefined) ?? 8
+        const quality = (params.quality as number | undefined) ?? 4
+        return new PIXI.BlurFilter({ strength, quality })
+      }
 
-      case "AlphaFilter":
-        return new PIXI.AlphaFilter({ alpha: 0.5 })
+      case "AlphaFilter": {
+        const alpha = (params.alpha as number | undefined) ?? 0.5
+        return new PIXI.AlphaFilter({ alpha })
+      }
 
-      case "NoiseFilter":
-        return new PIXI.NoiseFilter({ noise: 0.5 })
+      case "NoiseFilter": {
+        const noise = (params.noise as number | undefined) ?? 0.5
+        return new PIXI.NoiseFilter({ noise })
+      }
 
       case "GrayscaleFilter": {
         const cmf = new PIXI.ColorMatrixFilter()
@@ -71,9 +82,12 @@ export class FilterManager {
       case "AdjustmentFilter": {
         // Use ColorMatrixFilter to approximate an adjustment filter
         const cmf = new PIXI.ColorMatrixFilter()
-        cmf.brightness(1, false)
-        cmf.contrast(0.5, true)
-        cmf.saturate(0, true)
+        const brightness = (params.brightness as number | undefined) ?? 1
+        const contrast = (params.contrast as number | undefined) ?? 0.5
+        const saturate = (params.saturate as number | undefined) ?? 0
+        cmf.brightness(brightness, false)
+        cmf.contrast(contrast, true)
+        cmf.saturate(saturate, true)
         return cmf
       }
 

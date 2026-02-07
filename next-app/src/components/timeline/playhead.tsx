@@ -4,13 +4,13 @@ import { useEditorStore } from "../../lib/store"
 import { usePlayheadDrag } from "../../lib/hooks/use-playhead-drag"
 
 interface PlayheadProps {
-  timelineRef: React.RefObject<HTMLElement | null>
+  scrollContainerRef: React.RefObject<HTMLElement | null>
 }
 
-export function Playhead({ timelineRef }: PlayheadProps) {
+export function Playhead({ scrollContainerRef }: PlayheadProps) {
   const timecode = useEditorStore((s) => s.timecode)
   const zoom = useEditorStore((s) => s.zoom)
-  const { onPointerDown } = usePlayheadDrag(timelineRef)
+  const { onPointerDown } = usePlayheadDrag(scrollContainerRef, 0)
 
   const scale = Math.pow(2, zoom)
   const position = timecode * scale

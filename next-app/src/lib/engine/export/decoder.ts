@@ -30,6 +30,27 @@ export class FrameDecoder {
       )
     }
 
+    // Close existing decoder if re-initializing
+    if (this.decoder) {
+      try {
+        if (this.decoder.state !== "closed") {
+          this.decoder.close()
+        }
+      } catch {
+        // Ignore close errors on stale decoder
+      }
+      this.decoder = null
+    }
+
+    // Close all existing frames
+    for (const frame of this.frames) {
+      try {
+        frame.close()
+      } catch {
+        // Ignore close errors on stale frames
+      }
+    }
+
     this.frames = []
 
     const config: VideoDecoderConfig = {

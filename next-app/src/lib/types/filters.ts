@@ -1,6 +1,7 @@
 export interface Filter {
   targetEffectId: string
   type: FilterType
+  params?: Record<string, unknown>
 }
 
 export type FilterType =

@@ -2,254 +2,203 @@ import type { Animation } from "../../types"
 
 type PixiContainer = import("pixi.js").Container
 
+/** Simple easing functions */
+function easeOutPower2(t: number): number {
+  return 1 - (1 - t) * (1 - t)
+}
+function easeInPower2(t: number): number {
+  return t * t
+}
+function easeOutBack(t: number): number {
+  const c1 = 1.70158
+  const c3 = c1 + 1
+  return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2)
+}
+function easeInBack(t: number): number {
+  const c1 = 1.70158
+  const c3 = c1 + 1
+  return c3 * t * t * t - c1 * t * t
+}
+function easeOutElastic(t: number): number {
+  if (t === 0 || t === 1) return t
+  return Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * (2 * Math.PI / 3)) + 1
+}
+function easeInElastic(t: number): number {
+  if (t === 0 || t === 1) return t
+  return -Math.pow(2, 10 * t - 10) * Math.sin((t * 10 - 10.75) * (2 * Math.PI / 3))
+}
+
+function clamp01(v: number): number {
+  return Math.max(0, Math.min(1, v))
+}
+
 /**
- * AnimationManager uses GSAP to apply entrance/exit animations to PIXI display objects.
- *
- * Supported animations (7 in, 7 out):
- *   - slide-in / slide-out
- *   - fade-in / fade-out
- *   - spin-in / spin-out
- *   - bounce-in / bounce-out
- *   - wipe-in / wipe-out
- *   - blur-in / blur-out
- *   - zoom-in / zoom-out
+ * AnimationManager applies frame-based entrance/exit animations to PIXI display objects.
+ * Animations are computed synchronously each frame based on localTime, so they
+ * work correctly with the compositor's manual render loop (no GSAP ticker conflict).
  */
 export class AnimationManager {
-  private _tweens = new Map<string, GSAPTween>()
-
   /**
-   * Apply an animation to a PIXI display object.
+   * Apply an animation to a PIXI display object for the current frame.
+   * This modifies the target's properties directly and should be called
+   * AFTER updateRect so it overrides the base position/scale/alpha.
    *
    * @param target - The PIXI container/sprite to animate
    * @param animation - The animation definition from the store
    * @param effectDuration - The total duration of the parent effect in ms
-   * @param stageWidth - Width of the compositor stage (for slide offsets)
+   * @param localTime - Current time within the effect in ms (0 = effect start)
+   * @param stageWidth - Width of the compositor stage
    * @param stageHeight - Height of the compositor stage
    */
-  async applyAnimation(
+  applyAnimation(
     target: PixiContainer,
     animation: Animation,
     effectDuration: number,
+    localTime: number,
     stageWidth: number = 1920,
     _stageHeight: number = 1080
-  ): Promise<void> {
-    // Remove any existing tween for this target
-    this.removeAnimation(target)
-
-    let gsapInstance: GSAP
-    try {
-      const gsapModule = await import("gsap")
-      gsapInstance = gsapModule.gsap || gsapModule.default
-    } catch {
-      console.warn("[AnimationManager] GSAP not available. Skipping animation.")
-      return
-    }
-
-    const key = this._getKey(target)
-    const duration = animation.duration / 1000 // convert ms -> seconds
-
-    let tween: GSAPTween | null = null
+  ): void {
+    const animDuration = animation.duration // ms
 
     switch (animation.name) {
-      // ─── IN animations ───
-      case "fade-in":
-        tween = gsapInstance.from(target, {
-          alpha: 0,
-          duration,
-          ease: "power2.out",
-        })
+      case "slide-in": {
+        // Slide from left over first animDuration ms
+        const progress = clamp01(localTime / animDuration)
+        const eased = easeOutPower2(progress)
+        // Offset from -stageWidth to 0, added to current position
+        const offsetX = -stageWidth * (1 - eased)
+        target.x += offsetX
         break
+      }
 
-      case "fade-out":
-        tween = gsapInstance.to(target, {
-          alpha: 0,
-          duration,
-          delay: (effectDuration / 1000) - duration,
-          ease: "power2.in",
-        })
+      case "slide-out": {
+        // Slide to right over last animDuration ms
+        const startTime = effectDuration - animDuration
+        if (localTime >= startTime) {
+          const progress = clamp01((localTime - startTime) / animDuration)
+          const eased = easeInPower2(progress)
+          const offsetX = stageWidth * eased
+          target.x += offsetX
+        }
         break
+      }
 
-      case "slide-in":
-        tween = gsapInstance.from(target, {
-          x: -stageWidth,
-          duration,
-          ease: "power2.out",
-        })
+      case "fade-in": {
+        const progress = clamp01(localTime / animDuration)
+        const eased = easeOutPower2(progress)
+        target.alpha = eased
         break
+      }
 
-      case "slide-out":
-        tween = gsapInstance.to(target, {
-          x: stageWidth,
-          duration,
-          delay: (effectDuration / 1000) - duration,
-          ease: "power2.in",
-        })
+      case "fade-out": {
+        const startTime = effectDuration - animDuration
+        if (localTime >= startTime) {
+          const progress = clamp01((localTime - startTime) / animDuration)
+          const eased = easeInPower2(progress)
+          target.alpha = 1 - eased
+        }
         break
+      }
 
-      case "spin-in":
-        tween = gsapInstance.from(target, {
-          rotation: Math.PI * 2,
-          alpha: 0,
-          duration,
-          ease: "power2.out",
-        })
+      case "zoom-in": {
+        const progress = clamp01(localTime / animDuration)
+        const eased = easeOutBack(progress)
+        target.scale.x *= eased
+        target.scale.y *= eased
         break
+      }
 
-      case "spin-out":
-        tween = gsapInstance.to(target, {
-          rotation: Math.PI * 2,
-          alpha: 0,
-          duration,
-          delay: (effectDuration / 1000) - duration,
-          ease: "power2.in",
-        })
+      case "zoom-out": {
+        const startTime = effectDuration - animDuration
+        if (localTime >= startTime) {
+          const progress = clamp01((localTime - startTime) / animDuration)
+          const eased = easeInBack(progress)
+          const scaleFactor = 1 - eased
+          target.scale.x *= scaleFactor
+          target.scale.y *= scaleFactor
+        }
         break
+      }
 
-      case "bounce-in":
-        tween = gsapInstance.from(target.scale, {
-          x: 0,
-          y: 0,
-          duration,
-          ease: "elastic.out(1, 0.5)",
-        })
+      case "spin-in": {
+        const progress = clamp01(localTime / animDuration)
+        const eased = easeOutPower2(progress)
+        target.rotation += Math.PI * 2 * (1 - eased)
+        target.alpha = eased
         break
+      }
 
-      case "bounce-out":
-        tween = gsapInstance.to(target.scale, {
-          x: 0,
-          y: 0,
-          duration,
-          delay: (effectDuration / 1000) - duration,
-          ease: "elastic.in(1, 0.5)",
-        })
+      case "spin-out": {
+        const startTime = effectDuration - animDuration
+        if (localTime >= startTime) {
+          const progress = clamp01((localTime - startTime) / animDuration)
+          const eased = easeInPower2(progress)
+          target.rotation += Math.PI * 2 * eased
+          target.alpha = 1 - eased
+        }
         break
+      }
+
+      case "bounce-in": {
+        const progress = clamp01(localTime / animDuration)
+        const eased = easeOutElastic(progress)
+        target.scale.x *= eased
+        target.scale.y *= eased
+        break
+      }
+
+      case "bounce-out": {
+        const startTime = effectDuration - animDuration
+        if (localTime >= startTime) {
+          const progress = clamp01((localTime - startTime) / animDuration)
+          const eased = easeInElastic(progress)
+          const scaleFactor = 1 - eased
+          target.scale.x *= Math.max(0, scaleFactor)
+          target.scale.y *= Math.max(0, scaleFactor)
+        }
+        break
+      }
 
       case "wipe-in": {
-        // Wipe uses a mask approach. For now, we approximate with alpha + scaleX.
-        tween = gsapInstance.from(target, {
-          alpha: 0,
-          duration,
-          ease: "power1.out",
-        })
+        const progress = clamp01(localTime / animDuration)
+        const eased = easeOutPower2(progress)
+        target.alpha = eased
         break
       }
 
       case "wipe-out": {
-        tween = gsapInstance.to(target, {
-          alpha: 0,
-          duration,
-          delay: (effectDuration / 1000) - duration,
-          ease: "power1.in",
-        })
+        const startTime = effectDuration - animDuration
+        if (localTime >= startTime) {
+          const progress = clamp01((localTime - startTime) / animDuration)
+          const eased = easeInPower2(progress)
+          target.alpha = 1 - eased
+        }
         break
       }
 
       case "blur-in": {
-        // Animate a blur filter from strong to none
-        const blurFilter = await this._getOrCreateBlurFilter(target)
-        if (blurFilter) {
-          blurFilter.strength = 20
-          tween = gsapInstance.to(blurFilter, {
-            strength: 0,
-            duration,
-            ease: "power2.out",
-            onComplete: () => {
-              // Remove blur filter after animation
-              this._removeBlurFilter(target, blurFilter)
-            },
-          })
-        }
+        // Blur requires PIXI filter — skip for now, use fade as fallback
+        const progress = clamp01(localTime / animDuration)
+        target.alpha = easeOutPower2(progress)
         break
       }
 
       case "blur-out": {
-        const blurFilter = await this._getOrCreateBlurFilter(target)
-        if (blurFilter) {
-          blurFilter.strength = 0
-          tween = gsapInstance.to(blurFilter, {
-            strength: 20,
-            duration,
-            delay: (effectDuration / 1000) - duration,
-            ease: "power2.in",
-          })
+        const startTime = effectDuration - animDuration
+        if (localTime >= startTime) {
+          const progress = clamp01((localTime - startTime) / animDuration)
+          target.alpha = 1 - easeInPower2(progress)
         }
         break
       }
-
-      case "zoom-in":
-        tween = gsapInstance.from(target.scale, {
-          x: 0,
-          y: 0,
-          duration,
-          ease: "power2.out",
-        })
-        break
-
-      case "zoom-out":
-        tween = gsapInstance.to(target.scale, {
-          x: 0,
-          y: 0,
-          duration,
-          delay: (effectDuration / 1000) - duration,
-          ease: "power2.in",
-        })
-        break
-
-      default: {
-        const _name: never = animation
-        console.warn(`[AnimationManager] Unknown animation: ${(_name as Animation).name}`)
-        return
-      }
-    }
-
-    if (tween) {
-      this._tweens.set(key, tween)
     }
   }
 
-  /**
-   * Remove and kill any active animation tween on a target.
-   */
-  removeAnimation(target: PixiContainer): void {
-    const key = this._getKey(target)
-    const tween = this._tweens.get(key)
-    if (tween) {
-      tween.kill()
-      this._tweens.delete(key)
-    }
-  }
-
-  private _getKey(target: PixiContainer): string {
-    // Use the PIXI uid property if available, otherwise object identity via a WeakMap-like approach
-    return String((target as unknown as { uid?: number }).uid ?? target.label ?? Math.random())
-  }
-
-  private async _getOrCreateBlurFilter(
-    target: PixiContainer
-  ): Promise<import("pixi.js").BlurFilter | null> {
-    try {
-      const PIXI = await import("pixi.js")
-      const blurFilter = new PIXI.BlurFilter({ strength: 0 })
-      const existingFilters = (target.filters as import("pixi.js").Filter[]) || []
-      target.filters = [...existingFilters, blurFilter]
-      return blurFilter
-    } catch {
-      return null
-    }
-  }
-
-  private _removeBlurFilter(
-    target: PixiContainer,
-    blurFilter: import("pixi.js").BlurFilter
-  ): void {
-    const filters = (target.filters as import("pixi.js").Filter[]) || []
-    target.filters = filters.filter((f) => f !== blurFilter)
+  removeAnimation(_target: PixiContainer): void {
+    // No cleanup needed — animations are computed per-frame, no persistent state
   }
 
   destroy(): void {
-    for (const tween of this._tweens.values()) {
-      tween.kill()
-    }
-    this._tweens.clear()
+    // No persistent state to clean up
   }
 }

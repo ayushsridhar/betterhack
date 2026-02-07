@@ -39,7 +39,7 @@ function Section({
 
 const fontStyles: TextStyleFontStyle[] = ["normal", "italic", "oblique"]
 const alignOptions: TextStyleAlign[] = ["left", "center", "right", "justify"]
-const weightOptions: TextStyleFontWeight[] = ["normal", "bold", "lighter", "100", "200", "300", "400", "500", "600", "700", "800", "900"]
+const weightOptions: TextStyleFontWeight[] = ["normal", "bold", "bolder", "lighter", "100", "200", "300", "400", "500", "600", "700", "800", "900"]
 
 export function TextPanel({ effect }: TextPanelProps) {
   const setTextContent = useEditorStore((s) => s.setTextContent)

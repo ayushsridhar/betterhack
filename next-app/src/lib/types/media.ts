@@ -16,6 +16,7 @@ export interface VideoFile extends MediaFileBase {
 
 export interface AudioFile extends MediaFileBase {
   kind: "audio"
+  duration: number
 }
 
 export interface ImageFile extends MediaFileBase {
