@@ -63,12 +63,38 @@ export function TransitionPanel({ effect }: TransitionPanelProps) {
     (t) => t.incoming.id === effect.id || t.outgoing.id === effect.id
   )
 
+  const effects = useEditorStore((s) => s.effects)
+
   const handleAdd = (name: string) => {
+    // Find effects on the same track, sorted by start position
+    const sameTrackEffects = effects
+      .filter(
+        (e) =>
+          e.track === effect.track &&
+          e.id !== effect.id &&
+          (e.kind === "video" || e.kind === "image")
+      )
+      .sort((a, b) => a.start_at_position - b.start_at_position) as (VideoEffect | ImageEffect)[]
+
+    // Find the adjacent effect (immediately before or after by start_at_position)
+    const before = sameTrackEffects
+      .filter((e) => e.start_at_position < effect.start_at_position)
+      .at(-1)
+    const after = sameTrackEffects
+      .find((e) => e.start_at_position > effect.start_at_position)
+
+    const adjacent = before ?? after
+    if (!adjacent) return // No adjacent effect found — don't create the transition
+
+    // outgoing = earlier effect, incoming = later effect
+    const outgoing = adjacent.start_at_position < effect.start_at_position ? adjacent : effect
+    const incoming = adjacent.start_at_position < effect.start_at_position ? effect : adjacent
+
     addTransition({
       id: generateId(),
       duration,
-      incoming: effect,
-      outgoing: effect,
+      incoming,
+      outgoing,
       transition: {
         name,
         glsl: "",

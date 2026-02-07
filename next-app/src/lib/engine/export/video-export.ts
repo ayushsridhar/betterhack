@@ -54,7 +54,12 @@ export class VideoExport {
       }
 
       onStatus(stage.status)
-      await this.simulateStage(stage.startPct, stage.endPct, onProgress)
+      try {
+        await this.simulateStage(stage.startPct, stage.endPct, onProgress)
+      } catch (err) {
+        onStatus("error")
+        throw err
+      }
     }
 
     onStatus("complete")

@@ -5,46 +5,13 @@ import { FilterConfig } from "./filter-config"
 import type { VideoEffect, ImageEffect, FilterType } from "../../../lib/types"
 import { Plus } from "lucide-react"
 
-const allFilterTypes: FilterType[] = [
+/** Only the filter types that have working implementations */
+const implementedFilterTypes: FilterType[] = [
   "BlurFilter",
   "AlphaFilter",
   "NoiseFilter",
-  "AsciiFilter",
-  "CRTFilter",
-  "PixelateFilter",
-  "TwistFilter",
-  "OldFilmFilter",
-  "OutlineFilter",
-  "RadialBlurFilter",
-  "ReflectionFilter",
-  "RGBSplitFilter",
-  "ShockwaveFilter",
-  "SimpleLightmapFilter",
-  "SimplexNoiseFilter",
-  "TiltShiftFilter",
-  "ZoomBlurFilter",
-  "AdjustmentFilter",
-  "AdvancedBloomFilter",
-  "BackdropBlurFilter",
-  "BevelFilter",
-  "BloomFilter",
-  "BulgePinchFilter",
-  "ColorGradientFilter",
-  "ColorMapFilter",
-  "ColorOverlayFilter",
-  "ColorReplaceFilter",
-  "ConvolutionFilter",
-  "CrossHatchFilter",
-  "DotFilter",
-  "DropShadowFilter",
-  "EmbossFilter",
-  "GlitchFilter",
-  "GlowFilter",
-  "GodrayFilter",
   "GrayscaleFilter",
-  "HslAdjustmentFilter",
-  "KawaseBlurFilter",
-  "MotionBlurFilter",
+  "AdjustmentFilter",
 ]
 
 function formatFilterName(type: FilterType): string {
@@ -62,7 +29,7 @@ export function FilterPanel({ effect }: FilterPanelProps) {
 
   const appliedFilters = filters.filter((f) => f.targetEffectId === effect.id)
   const appliedTypes = new Set(appliedFilters.map((f) => f.type))
-  const availableFilters = allFilterTypes.filter((t) => !appliedTypes.has(t))
+  const availableFilters = implementedFilterTypes.filter((t) => !appliedTypes.has(t))
 
   const handleAddFilter = (type: FilterType) => {
     addFilter({ targetEffectId: effect.id, type })

@@ -5,6 +5,11 @@ const DB_VERSION = 3
 const STORE_NAME = "files"
 
 export function openDB(): Promise<IDBDatabase> {
+  if (typeof indexedDB === "undefined")
+    return Promise.reject(
+      new Error("indexedDB is unavailable (SSR/Node environment)")
+    )
+
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION)
 
@@ -25,10 +30,19 @@ export async function addFile(media: AnyMedia): Promise<void> {
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, "readwrite")
     const store = tx.objectStore(STORE_NAME)
-    const request = store.put(media)
-    request.onsuccess = () => resolve()
-    request.onerror = () => reject(request.error)
-    tx.oncomplete = () => db.close()
+    store.put(media)
+    tx.oncomplete = () => {
+      db.close()
+      resolve()
+    }
+    tx.onabort = () => {
+      db.close()
+      reject(tx.error)
+    }
+    tx.onerror = () => {
+      db.close()
+      reject(tx.error)
+    }
   })
 }
 
@@ -38,9 +52,22 @@ export async function getFile(hash: string): Promise<AnyMedia | undefined> {
     const tx = db.transaction(STORE_NAME, "readonly")
     const store = tx.objectStore(STORE_NAME)
     const request = store.get(hash)
-    request.onsuccess = () => resolve(request.result as AnyMedia | undefined)
-    request.onerror = () => reject(request.error)
-    tx.oncomplete = () => db.close()
+    let result: AnyMedia | undefined
+    request.onsuccess = () => {
+      result = request.result as AnyMedia | undefined
+    }
+    tx.oncomplete = () => {
+      db.close()
+      resolve(result)
+    }
+    tx.onabort = () => {
+      db.close()
+      reject(tx.error)
+    }
+    tx.onerror = () => {
+      db.close()
+      reject(tx.error)
+    }
   })
 }
 
@@ -50,9 +77,22 @@ export async function getAllFiles(): Promise<AnyMedia[]> {
     const tx = db.transaction(STORE_NAME, "readonly")
     const store = tx.objectStore(STORE_NAME)
     const request = store.getAll()
-    request.onsuccess = () => resolve(request.result as AnyMedia[])
-    request.onerror = () => reject(request.error)
-    tx.oncomplete = () => db.close()
+    let result: AnyMedia[] = []
+    request.onsuccess = () => {
+      result = request.result as AnyMedia[]
+    }
+    tx.oncomplete = () => {
+      db.close()
+      resolve(result)
+    }
+    tx.onabort = () => {
+      db.close()
+      reject(tx.error)
+    }
+    tx.onerror = () => {
+      db.close()
+      reject(tx.error)
+    }
   })
 }
 
@@ -61,10 +101,19 @@ export async function deleteFile(hash: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, "readwrite")
     const store = tx.objectStore(STORE_NAME)
-    const request = store.delete(hash)
-    request.onsuccess = () => resolve()
-    request.onerror = () => reject(request.error)
-    tx.oncomplete = () => db.close()
+    store.delete(hash)
+    tx.oncomplete = () => {
+      db.close()
+      resolve()
+    }
+    tx.onabort = () => {
+      db.close()
+      reject(tx.error)
+    }
+    tx.onerror = () => {
+      db.close()
+      reject(tx.error)
+    }
   })
 }
 
@@ -74,8 +123,21 @@ export async function countByHash(hash: string): Promise<number> {
     const tx = db.transaction(STORE_NAME, "readonly")
     const store = tx.objectStore(STORE_NAME)
     const request = store.count(hash)
-    request.onsuccess = () => resolve(request.result)
-    request.onerror = () => reject(request.error)
-    tx.oncomplete = () => db.close()
+    let result = 0
+    request.onsuccess = () => {
+      result = request.result
+    }
+    tx.oncomplete = () => {
+      db.close()
+      resolve(result)
+    }
+    tx.onabort = () => {
+      db.close()
+      reject(tx.error)
+    }
+    tx.onerror = () => {
+      db.close()
+      reject(tx.error)
+    }
   })
 }

@@ -112,9 +112,12 @@ export class Compositor {
       }
     }
 
-    // Enable stage interactivity
+    // Enable stage interactivity and layer sorting
+    // Layer order: top track in timeline = lowest zIndex = background
+    //              bottom track in timeline = highest zIndex = foreground
     this._app.stage.eventMode = "static"
     this._app.stage.hitArea = this._app.screen
+    this._app.stage.sortableChildren = true
 
     // Deselect on background click
     this._app.stage.on("pointerdown", (e) => {
@@ -145,6 +148,13 @@ export class Compositor {
       })
       // Re-compose to update sprite position
       this.compose(this._getState().timecode)
+    })
+
+    // Give the transition manager a way to look up sprites from all managers
+    this.transitionManager.setSpriteGetter((effectId: string) => {
+      return this.videoManager.getSprite(effectId)
+        || this.imageManager.getSprite(effectId)
+        || this.textManager.getDisplayObject(effectId)
     })
 
     this._isInitialized = true
@@ -209,7 +219,7 @@ export class Compositor {
     if (!this._app || !this._isInitialized) return
 
     const state = this._getState()
-    const { effects, filters, animations, transitions } = state
+    const { effects, tracks, filters, animations, transitions } = state
 
     const newVisible = new Set<string>()
 
@@ -221,7 +231,18 @@ export class Compositor {
       const effectDuration = effect.end - effect.start
       const effectEnd = effectStart + effectDuration
 
-      const isVisible = timecode >= effectStart && timecode < effectEnd
+      const isTimeVisible = timecode >= effectStart && timecode < effectEnd
+
+      // Respect track mute/visibility flags
+      const track = tracks[effect.track]
+      const isAudio = effect.kind === "audio"
+      const trackAllowed = track
+        ? isAudio
+          ? !track.muted
+          : track.visible && !track.muted
+        : true
+
+      const isVisible = isTimeVisible && trackAllowed
 
       if (isVisible) {
         newVisible.add(effect.id)
@@ -229,6 +250,13 @@ export class Compositor {
         this._updateEffect(effect, timecode, filters, animations, transitions)
       } else {
         this._hideEffect(effect)
+        // For muted tracks, ensure audio is paused
+        if (isTimeVisible && !trackAllowed) {
+          if (isAudio) {
+            this.audioManager.pause(effect.id)
+          }
+          this.videoManager.pauseVideo(effect.id)
+        }
       }
     }
 
@@ -312,49 +340,67 @@ export class Compositor {
       switch (effect.kind) {
         case "video": {
           const media = await getFile(effect.file_hash)
-          if (media) {
-            const dims = await this.videoManager.addVideo(effect, media.file)
-            // Auto-fit to frame using actual video dimensions
-            if (dims) {
-              const rect = fitToFrame(dims.videoWidth, dims.videoHeight, projW, projH)
-              this.videoManager.updateRect(effect.id, rect)
-              // Write corrected rect back to store
-              this._setState((s) => {
-                const eff = s.effects.find((e) => e.id === effect.id)
-                if (eff && "rect" in eff) {
-                  (eff as VideoEffect).rect = rect
-                }
-              })
-            }
+          if (!media) {
+            console.warn(`[Compositor] Media not found for video effect ${effect.id} (hash: ${effect.file_hash})`)
+            this._loadingEffects.delete(effect.id)
+            return false
           }
+          const dims = await this.videoManager.addVideo(effect, media.file)
+          // Auto-fit to frame using actual video dimensions
+          if (dims) {
+            const rect = fitToFrame(dims.videoWidth, dims.videoHeight, projW, projH)
+            this.videoManager.updateRect(effect.id, rect)
+            // Write corrected rect back to store
+            this._setState((s) => {
+              const eff = s.effects.find((e) => e.id === effect.id)
+              if (eff && "rect" in eff) {
+                (eff as VideoEffect).rect = rect
+              }
+            })
+          }
+          // Set zIndex for proper layer ordering
+          const videoSprite = this.videoManager.getSprite(effect.id)
+          if (videoSprite) videoSprite.zIndex = effect.track
           break
         }
         case "image": {
           const media = await getFile(effect.file_hash)
-          if (media) {
-            const dims = await this.imageManager.addImage(effect, media.file)
-            if (dims) {
-              const rect = fitToFrame(dims.imgWidth, dims.imgHeight, projW, projH)
-              this.imageManager.updateRect(effect.id, rect)
-              this._setState((s) => {
-                const eff = s.effects.find((e) => e.id === effect.id)
-                if (eff && "rect" in eff) {
-                  (eff as ImageEffect).rect = rect
-                }
-              })
-            }
+          if (!media) {
+            console.warn(`[Compositor] Media not found for image effect ${effect.id} (hash: ${effect.file_hash})`)
+            this._loadingEffects.delete(effect.id)
+            return false
           }
+          const dims = await this.imageManager.addImage(effect, media.file)
+          if (dims) {
+            const rect = fitToFrame(dims.imgWidth, dims.imgHeight, projW, projH)
+            this.imageManager.updateRect(effect.id, rect)
+            this._setState((s) => {
+              const eff = s.effects.find((e) => e.id === effect.id)
+              if (eff && "rect" in eff) {
+                (eff as ImageEffect).rect = rect
+              }
+            })
+          }
+          // Set zIndex for proper layer ordering
+          const imageSprite = this.imageManager.getSprite(effect.id)
+          if (imageSprite) imageSprite.zIndex = effect.track
           break
         }
         case "text": {
           await this.textManager.addText(effect)
+          // Set zIndex for proper layer ordering
+          const textObj = this.textManager.getDisplayObject(effect.id)
+          if (textObj) textObj.zIndex = effect.track
           break
         }
         case "audio": {
           const media = await getFile(effect.file_hash)
-          if (media) {
-            await this.audioManager.addAudio(effect, media.file)
+          if (!media) {
+            console.warn(`[Compositor] Media not found for audio effect ${effect.id} (hash: ${effect.file_hash})`)
+            this._loadingEffects.delete(effect.id)
+            return false
           }
+          await this.audioManager.addAudio(effect, media.file)
           break
         }
       }
@@ -510,19 +556,19 @@ export class Compositor {
         this.videoManager.updateVideo(effect.id, timecode, videoEffect)
         this.videoManager.updateRect(effect.id, videoEffect.rect)
 
-        // Apply filters
-        const effectFilters = filters.filter(
-          (f) => f.targetEffectId === effect.id
-        )
         const sprite = this.videoManager.getSprite(effect.id)
-        if (sprite && effectFilters.length > 0) {
+        if (sprite) {
+          // Update layer order: higher track index = higher zIndex = foreground
+          sprite.zIndex = effect.track
+          // Apply filters
+          const effectFilters = filters.filter(
+            (f) => f.targetEffectId === effect.id
+          )
           this.filterManager.applyFilters(sprite, effectFilters)
         }
 
-        // Apply animations
         this._applyAnimationsForEffect(effect, sprite, animations, localTime)
 
-        // If playing, ensure video is playing
         if (this._isPlaying) {
           this.videoManager.playVideo(effect.id)
         }
@@ -534,16 +580,14 @@ export class Compositor {
         this.imageManager.updateRect(effect.id, imageEffect.rect)
 
         const sprite = this.imageManager.getSprite(effect.id)
-
-        // Apply filters
-        const effectFilters = filters.filter(
-          (f) => f.targetEffectId === effect.id
-        )
-        if (sprite && effectFilters.length > 0) {
+        if (sprite) {
+          sprite.zIndex = effect.track
+          const effectFilters = filters.filter(
+            (f) => f.targetEffectId === effect.id
+          )
           this.filterManager.applyFilters(sprite, effectFilters)
         }
 
-        // Apply animations
         this._applyAnimationsForEffect(effect, sprite, animations, localTime)
         break
       }
@@ -553,16 +597,14 @@ export class Compositor {
         this.textManager.updateText(effect.id, textEffect)
 
         const displayObject = this.textManager.getDisplayObject(effect.id)
-
-        // Apply filters
-        const effectFilters = filters.filter(
-          (f) => f.targetEffectId === effect.id
-        )
-        if (displayObject && effectFilters.length > 0) {
+        if (displayObject) {
+          displayObject.zIndex = effect.track
+          const effectFilters = filters.filter(
+            (f) => f.targetEffectId === effect.id
+          )
           this.filterManager.applyFilters(displayObject, effectFilters)
         }
 
-        // Apply animations
         this._applyAnimationsForEffect(
           effect,
           displayObject,
@@ -609,7 +651,7 @@ export class Compositor {
     effect: AnyEffect,
     target: import("pixi.js").Container | null,
     animations: Animation[],
-    _localTime: number
+    localTime: number
   ): void {
     if (!target) return
 
@@ -627,6 +669,7 @@ export class Compositor {
         target,
         animation,
         effectDuration,
+        localTime,
         settings.width,
         settings.height
       )

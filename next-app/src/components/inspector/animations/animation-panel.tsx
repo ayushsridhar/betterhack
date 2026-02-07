@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { useEditorStore } from "../../../lib/store"
 import { AnimationCard } from "./animation-card"
 import type {
@@ -47,18 +48,24 @@ export function AnimationPanel({ effect }: AnimationPanelProps) {
     effectAnimations.filter((a) => a.type === "out").map((a) => a.name)
   )
 
-  // Get current duration from any existing animation, default 500ms
-  const currentDuration = effectAnimations.length > 0 ? effectAnimations[0].duration : 500
+  // Track duration in local state, initialized from first found animation or default 500
+  const initialDuration = effectAnimations.length > 0 ? effectAnimations[0].duration : 500
+  const [duration, setDuration] = useState(initialDuration)
 
   const handleToggleIn = (name: AnimationInName) => {
     if (activeInNames.has(name)) {
+      // Clicking the same active animation — just remove it
       removeAnimation(effect.id, "in", "Animation")
     } else {
+      // Remove any existing "in" animation first, then add the new one
+      if (activeInNames.size > 0) {
+        removeAnimation(effect.id, "in", "Animation")
+      }
       addAnimation({
         name,
         type: "in",
         targetEffect: effect,
-        duration: currentDuration,
+        duration,
         for: "Animation",
       })
     }
@@ -66,20 +73,29 @@ export function AnimationPanel({ effect }: AnimationPanelProps) {
 
   const handleToggleOut = (name: AnimationOutName) => {
     if (activeOutNames.has(name)) {
+      // Clicking the same active animation — just remove it
       removeAnimation(effect.id, "out", "Animation")
     } else {
+      // Remove any existing "out" animation first, then add the new one
+      if (activeOutNames.size > 0) {
+        removeAnimation(effect.id, "out", "Animation")
+      }
       addAnimation({
         name,
         type: "out",
         targetEffect: effect,
-        duration: currentDuration,
+        duration,
         for: "Animation",
       })
     }
   }
 
-  const handleDurationChange = (duration: number) => {
-    setAnimationDuration(effect.id, duration)
+  const handleDurationChange = (newDuration: number) => {
+    setDuration(newDuration)
+    // Also update the store if an animation exists
+    if (effectAnimations.length > 0) {
+      setAnimationDuration(effect.id, newDuration)
+    }
   }
 
   return (
@@ -88,14 +104,14 @@ export function AnimationPanel({ effect }: AnimationPanelProps) {
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className="text-text-tertiary text-xs">Duration</label>
-          <span className="text-text-secondary text-xs font-mono">{currentDuration}ms</span>
+          <span className="text-text-secondary text-xs font-mono">{duration}ms</span>
         </div>
         <input
           type="range"
           min={100}
           max={2000}
           step={50}
-          value={currentDuration}
+          value={duration}
           onChange={(e) => handleDurationChange(Number(e.target.value))}
           className="w-full h-1 rounded-full appearance-none bg-bg-elevated accent-accent cursor-pointer"
         />

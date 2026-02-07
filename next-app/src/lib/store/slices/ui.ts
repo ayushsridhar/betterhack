@@ -1,4 +1,4 @@
-export type LeftPanelTab = "media" | "templates"
+export type LeftPanelTab = "media" | "text"
 export type RightPanelTab = "inspector" | "settings"
 
 export interface UIState {

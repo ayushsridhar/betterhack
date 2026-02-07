@@ -1,3 +1,4 @@
+import type { Container } from "pixi.js"
 import type { Transition } from "../../types"
 
 /**
@@ -55,45 +56,65 @@ interface TransitionEntry {
   // Future: will hold a custom PIXI.Filter with the GL transition shader
 }
 
+type SpriteGetter = (effectId: string) => Container | null
+
 /**
- * TransitionManager handles GL-based transitions between two effects.
+ * TransitionManager handles transitions between two effects.
  *
- * This is currently a stub that defines the interface and shader templates.
- * Full implementation will create custom PIXI.Filter instances using the
- * transition's GLSL code and render the transition between two render textures.
+ * Currently implements a basic alpha crossfade for all transition types.
+ * The shader templates above are preserved for future GL-based transitions.
  */
 export class TransitionManager {
   private _entries = new Map<string, TransitionEntry>()
+  private _spriteGetter: SpriteGetter | null = null
+
+  /**
+   * Provide a function the manager can use to look up sprites by effect ID.
+   * This should be called by the compositor after managers are initialized.
+   */
+  setSpriteGetter(fn: SpriteGetter): void {
+    this._spriteGetter = fn
+  }
 
   /**
    * Apply a transition between two effects at the given progress.
+   * Uses a simple alpha crossfade: outgoing fades from 1->0, incoming fades from 0->1.
    *
    * @param transition - The transition definition containing GLSL code and parameters
    * @param progress - A value from 0 to 1 representing the transition progress
    */
   applyTransition(transition: Transition, progress: number): void {
-    console.log(
-      `[TransitionManager] applyTransition "${transition.transition.name}" at progress ${progress.toFixed(3)} (stub)`
-    )
-
     if (!this._entries.has(transition.id)) {
       this._entries.set(transition.id, { transition })
     }
 
-    // TODO: Create a custom PIXI.Filter using the transition GLSL,
-    // render the outgoing effect to a render texture,
-    // render the incoming effect to a render texture,
-    // then apply the transition filter with the progress uniform.
+    if (!this._spriteGetter) return
+
+    const outgoingSprite = this._spriteGetter(transition.outgoing.id)
+    const incomingSprite = this._spriteGetter(transition.incoming.id)
+
+    // Apply crossfade (works as default for all transition types including "fade")
+    if (outgoingSprite) {
+      outgoingSprite.alpha = 1 - progress
+    }
+    if (incomingSprite) {
+      incomingSprite.alpha = progress
+    }
   }
 
   /**
-   * Remove a transition and clean up its resources.
+   * Remove a transition and reset both sprites' alpha to 1.
    */
   removeTransition(transitionId: string): void {
     const entry = this._entries.get(transitionId)
     if (!entry) return
 
-    // TODO: Destroy the custom PIXI.Filter and render textures
+    if (this._spriteGetter) {
+      const outgoingSprite = this._spriteGetter(entry.transition.outgoing.id)
+      const incomingSprite = this._spriteGetter(entry.transition.incoming.id)
+      if (outgoingSprite) outgoingSprite.alpha = 1
+      if (incomingSprite) incomingSprite.alpha = 1
+    }
 
     this._entries.delete(transitionId)
   }
@@ -112,5 +133,6 @@ export class TransitionManager {
     for (const transitionId of Array.from(this._entries.keys())) {
       this.removeTransition(transitionId)
     }
+    this._spriteGetter = null
   }
 }

@@ -41,8 +41,15 @@ export function useTimelineDrag() {
         const hash = data.hash as string
         const kind = data.kind as string
 
-        // Only handle if dropped onto a track
+        // Only handle if dropped onto a track (including "track-new")
         if (!over || !(over.id as string).startsWith("track-")) return
+
+        // If dropped on the "Add Track" zone, create a new track first
+        if (over.id === "track-new") {
+          useEditorStore.getState().addTrack()
+          // The new track is now at the end
+          targetTrackIndex = useEditorStore.getState().tracks.length - 1
+        }
 
         const state = useEditorStore.getState()
         const id = generateId()
@@ -95,7 +102,12 @@ export function useTimelineDrag() {
           let name = "Audio"
           try {
             const media = await getFile(hash)
-            if (media) name = media.file.name
+            if (media) {
+              name = media.file.name
+              if (media.kind === "audio" && media.duration > 0) {
+                durationMs = media.duration * 1000
+              }
+            }
           } catch {
             // Use defaults
           }

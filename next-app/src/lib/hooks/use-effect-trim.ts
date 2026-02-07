@@ -41,6 +41,7 @@ export function useEffectTrim(effectId: string, side: "left" | "right") {
           const startDelta = clampedStart - initialStart
           setEffectStart(effectId, clampedStart)
           setEffectStartPosition(effectId, initialStartPosition + startDelta)
+          setEffectDuration(effectId, initialEnd - clampedStart)
         } else {
           const newEnd = initialEnd + deltaTime
           const minEnd = initialStart + 1 // Minimum 1ms duration

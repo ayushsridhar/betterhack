@@ -6,7 +6,7 @@ export function Footer() {
           &copy; {new Date().getFullYear()} Omniclip. All rights reserved.
         </p>
         <a
-          href="https://github.com/nicosResworworkoWorkoWorko/omniclip"
+          href="https://github.com/omni-media/omniclip"
           target="_blank"
           rel="noopener noreferrer"
           className="text-sm text-text-tertiary hover:text-text-secondary transition-colors"
