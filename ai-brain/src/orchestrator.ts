@@ -134,11 +134,23 @@ export class Orchestrator {
 			}
 
 			// 8. Build changes response
-			const changes: Change[] = mcpCalls.map((call, index) => ({
-				type: call.tool,
-				description: this.describeChange(call, results[index]),
-				mcpCall: call,
+			// Ensure we only process calls that have results
+			const changes: Change[] = results.map((result, index) => ({
+				type: mcpCalls[index].tool,
+				description: this.describeChange(mcpCalls[index], result),
+				mcpCall: mcpCalls[index],
 			}))
+
+			// Handle any unexecuted calls (if executeMany stopped early)
+			if (results.length < mcpCalls.length) {
+				for (let i = results.length; i < mcpCalls.length; i++) {
+					changes.push({
+						type: mcpCalls[i].tool,
+						description: `Skipped: ${mcpCalls[i].tool} (execution stopped due to previous failure)`,
+						mcpCall: mcpCalls[i],
+					})
+				}
+			}
 
 			// 9. Add to edit history
 			this.history.addEdit(sessionId, {
@@ -178,6 +190,10 @@ export class Orchestrator {
 	 * Describe a change in human-readable format
 	 */
 	private describeChange(call: MCPCall, result: MCPResult): string {
+		if (!result) {
+			return `No result returned for ${call.tool}`
+		}
+
 		if (!result.success) {
 			return `Failed to ${call.tool}: ${result.error}`
 		}

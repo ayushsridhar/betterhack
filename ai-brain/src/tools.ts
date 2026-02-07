@@ -242,25 +242,12 @@ export const mcpTools: Anthropic.Tool[] = [
 
 /**
  * Default actions for annotations without prompts
+ * Note: These are documented for reference but handled via Claude's system prompt.
+ * Claude automatically applies these defaults when no explicit prompt is provided.
  */
-export const defaultAnnotationActions = {
-	arrow: {
-		action: 'add_transition',
-		defaults: {
-			transitionType: 'fade',
-			duration: 500,
-		},
-	},
-	rectangle: {
-		action: 'select_for_modification',
-		description: 'Rectangle selects a clip for modification',
-	},
-	circle: {
-		action: 'highlight_focus',
-		description: 'Circle highlights/focuses on a clip',
-	},
-	freehand: {
-		action: 'interpret_from_shape',
-		description: 'Freehand drawings are interpreted by AI',
-	},
-}
+export const defaultAnnotationBehaviors = {
+	arrow: 'fade transition (500ms)',
+	rectangle: 'select clip for modification',
+	circle: 'highlight/focus clip',
+	freehand: 'AI interprets shape',
+} as const

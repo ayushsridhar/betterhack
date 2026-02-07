@@ -93,6 +93,10 @@ Please try a different approach or corrected parameters.`
 					content: originalPrompt,
 				},
 				{
+					role: 'assistant',
+					content: 'I attempted to process that request but encountered an error.',
+				},
+				{
 					role: 'user',
 					content: retryMessage,
 				},

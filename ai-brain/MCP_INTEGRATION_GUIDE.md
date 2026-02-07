@@ -4,7 +4,7 @@
 
 Since the MCP server uses WebSocket with only ONE client allowed at a time, the simplest integration for the hackathon is:
 
-```
+```text
 AI Brain → Generates MCP Calls → Member 2 (UI) → Executes Directly via Omniclip Context
 ```
 
