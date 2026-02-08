@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Omniclip - Video Editor",
-  description: "Browser-based video editor",
+  title: "Picasso - AI Video Editor",
+  description: "AI-powered browser-based video editor with natural language annotations",
 }
 
 export default function RootLayout({
