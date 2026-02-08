@@ -68,11 +68,35 @@ export function AnnotationModal() {
     setError(null)
 
     try {
-      // Update annotations with affected effect IDs
-      const annotationsWithEffects = annotations.map(a => ({
-        ...a,
-        affectedEffects: selectedEffectIds,
-      }))
+      // Detect which clips each annotation spatially overlaps
+      const annotationsWithEffects = annotations.map(a => {
+        // For now, use a simple heuristic: if arrow, use first 2 clips in order
+        // If rectangle/circle, include all clips they visually overlap
+        // This is a hackathon simplification - proper spatial detection would be better
+
+        if (a.type === 'arrow' && selectedEffects.length >= 2) {
+          // Sort effects by timeline order
+          const sorted = [...selectedEffects].sort((a, b) => {
+            if (a.track !== b.track) return a.track - b.track
+            return a.start_at_position - b.start_at_position
+          })
+
+          // For arrows, intelligently pick 2 adjacent clips based on timeline position
+          // This is still a hack - ideally we'd detect spatial overlap with clip cards
+          const clipIndices = sorted.map((_, i) => i)
+
+          // Default to first 2 for now, but could enhance with spatial analysis
+          return {
+            ...a,
+            affectedEffects: [sorted[0].id, sorted[1].id],
+          }
+        }
+
+        return {
+          ...a,
+          affectedEffects: selectedEffectIds,
+        }
+      })
 
       const result = await executeAIEdit(annotationsWithEffects, prompt, store)
 
@@ -190,21 +214,34 @@ export function AnnotationModal() {
             {/* Clip visualization as background */}
             <div className="absolute inset-0 p-8 overflow-auto pointer-events-none">
               <div className="flex gap-4 flex-wrap">
-                {selectedEffects.map((effect) => (
+                {selectedEffects
+                  .sort((a, b) => {
+                    if (a.track !== b.track) return a.track - b.track
+                    return a.start_at_position - b.start_at_position
+                  })
+                  .map((effect, index) => (
                   <div
                     key={effect.id}
-                    className="p-4 bg-bg-base rounded border border-border-subtle shadow-sm"
+                    className="p-4 bg-bg-base rounded border-2 border-purple-500/50 shadow-lg relative"
                   >
+                    {/* Clip number badge */}
+                    <div className="absolute -top-3 -left-3 w-8 h-8 bg-purple-500 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg border-2 border-white">
+                      {index + 1}
+                    </div>
+
                     <div className="text-xs font-mono text-text-tertiary mb-1">
                       {effect.kind.toUpperCase()}
                     </div>
                     <div className="text-sm font-medium">
                       {effect.kind === 'text' ? (effect as any).text :
                        effect.kind === 'video' || effect.kind === 'image' ?
-                       (effect as any).src?.split('/').pop() : 'Effect'}
+                       (effect as any).src?.split('/').pop() || 'Untitled' : 'Effect'}
                     </div>
                     <div className="text-xs text-text-tertiary mt-1">
                       Track {effect.track} • {Math.round(effect.duration / 1000)}s
+                    </div>
+                    <div className="text-xs text-purple-600 dark:text-purple-400 font-medium mt-1">
+                      @ {Math.round(effect.start_at_position / 1000)}s
                     </div>
                   </div>
                 ))}
@@ -221,8 +258,12 @@ export function AnnotationModal() {
               <div className="absolute inset-0 flex items-center justify-center text-center text-text-tertiary pointer-events-none">
                 <div>
                   <div className="text-6xl mb-4">✏️</div>
-                  <div className="text-lg font-medium">Draw annotations to indicate your edits</div>
-                  <div className="text-sm mt-2">Use the tools above to draw arrows, shapes, or freehand</div>
+                  <div className="text-lg font-medium">Draw annotations to guide the AI</div>
+                  <div className="text-sm mt-2 max-w-md">
+                    Draw arrows, shapes, or freehand annotations, then use clip numbers in your prompt.
+                    <br />
+                    <span className="text-purple-400 font-medium">Example: "add fade from clip 2 to clip 3"</span>
+                  </div>
                 </div>
               </div>
             )}
