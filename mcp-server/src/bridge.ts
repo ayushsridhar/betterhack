@@ -99,7 +99,7 @@ export class BrowserBridge {
 		return new Promise((resolve, reject) => {
 			if (!this.isConnected) {
 				reject(new Error(
-					"Picasso browser app is not connected. Please open the editor at http://localhost:8080 and ensure the MCP bridge is active."
+					"Omniclip browser app is not connected. Please open the editor at http://localhost:8080 and ensure the MCP bridge is active."
 				));
 				return;
 			}

@@ -13,7 +13,7 @@ export default function EditorPage() {
             href="/"
             className="text-xl font-bold text-text-primary"
           >
-            Picasso
+            Omniclip
           </Link>
           <ImportProject />
         </div>

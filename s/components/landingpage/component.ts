@@ -269,7 +269,7 @@ export class LandingPage extends LitElement {
 					<div class="collab-content">
 						<h2>Edit Together in Real-Time</h2>
 						<p>
-							Create amazing videos as a team with Picasso's powerful collaboration features.
+							Create amazing videos as a team with Omniclip's powerful collaboration features.
 							Multiple editors can work on the same project simultaneously, seeing changes instantly.
 						</p>
 						<div class=flex>
@@ -483,7 +483,7 @@ export class LandingPage extends LitElement {
 			<section id="coming-soon" class="coming-soon">
 				<div class="coming-soon-header">
 					<h2>Coming Soon <span class="feature-badge">New Features</span></h2>
-					<p>We're constantly improving Picasso with powerful new features to make your video editing experience even better.</p>
+					<p>We're constantly improving Omniclip with powerful new features to make your video editing experience even better.</p>
 				</div>
 				
 				<div class="coming-soon-container">
@@ -545,7 +545,7 @@ export class LandingPage extends LitElement {
 			<section class="developers" id="developers">
 				<h2>For developers <span class="coming-soon-badge">Coming Soon</span></h2>
 				<p class="section-intro">
-					Take full control of Picasso projects through code, automation, or CI/CD pipelines.
+					Take full control of Omniclip projects through code, automation, or CI/CD pipelines.
 				</p>
 
 				<div class="dev-features-grid">
@@ -564,7 +564,7 @@ export class LandingPage extends LitElement {
 							<div class="code-preview">
 								<pre><code>
 // Create a video timeline programmatically
-const watermark = subtitle("picasso")
+const watermark = subtitle("omniclip")
 const xfade = crossfade(500)
 
 const timeline = sequence(
@@ -651,12 +651,12 @@ $ omnitool batch-render ./projects/* --output-dir ./exports
 			<!-- Footer -->
 			<footer>
 				<div class="footer-logo-background">
-					<img src="/assets/icon3.png" alt="Picasso" />
+					<img src="/assets/icon3.png" alt="Omniclip" />
 				</div>
 				
 				<div class="footer-content">
 					<!-- <div class="footer-main"> -->
-					<!-- 	<span>Copyright © 2024 Picasso All Rights Reserved.</span> -->
+					<!-- 	<span>Copyright © 2024 Omniclip All Rights Reserved.</span> -->
 					<!-- 	<div class="footer-links"> -->
 					<!-- 		<a>Terms & Conditions</a> -->
 					<!-- 		<a>Privacy Policy</a> -->

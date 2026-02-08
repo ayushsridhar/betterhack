@@ -5,7 +5,7 @@ export default template(async basic => {
 	return easypage({
 		path,
 		css: "index.css",
-		title: "Picasso",
+		title: "omniclip",
 		head: html`
 			<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/themes/dark.css" />
 			<script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/shoelace.js" ></script>
@@ -32,7 +32,7 @@ export default template(async basic => {
 			<link rel="preconnect" href="https://fonts.googleapis.com">
 			<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 			<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;400;500;700;800&display=swap" rel="stylesheet">
-			<title>Picasso</title>
+			<title>omni-clip</title>
 		`,
 		body: html`
 			<div class="loading-page-indicator">

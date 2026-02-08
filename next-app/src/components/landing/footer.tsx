@@ -3,7 +3,7 @@ export function Footer() {
     <footer className="border-t border-border-subtle py-8 px-6">
       <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
         <p className="text-sm text-text-tertiary">
-          &copy; {new Date().getFullYear()} Picasso. All rights reserved.
+          &copy; {new Date().getFullYear()} Omniclip. All rights reserved.
         </p>
         <a
           href="https://github.com/omni-media/omniclip"

@@ -206,7 +206,7 @@ export class Project {
 	}
 
 	*loadProjectsFromStorage() {
-		const prefix = 'picasso_'
+		const prefix = 'omniclip_'
 		for (const key in localStorage) {
 			if (key && key.startsWith(prefix)) {
 				const storedData = localStorage.getItem(key)
