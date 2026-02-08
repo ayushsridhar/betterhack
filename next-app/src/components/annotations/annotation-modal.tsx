@@ -59,8 +59,8 @@ export function AnnotationModal() {
   }
 
   const handleSubmitToAI = async () => {
-    if (annotations.length === 0) {
-      setError('Please draw at least one annotation')
+    if (annotations.length === 0 && !prompt.trim()) {
+      setError('Please draw an annotation or enter a prompt')
       return
     }
 
@@ -68,35 +68,15 @@ export function AnnotationModal() {
     setError(null)
 
     try {
-      // Detect which clips each annotation spatially overlaps
-      const annotationsWithEffects = annotations.map(a => {
-        // For now, use a simple heuristic: if arrow, use first 2 clips in order
-        // If rectangle/circle, include all clips they visually overlap
-        // This is a hackathon simplification - proper spatial detection would be better
-
-        if (a.type === 'arrow' && selectedEffects.length >= 2) {
-          // Sort effects by timeline order
-          const sorted = [...selectedEffects].sort((a, b) => {
-            if (a.track !== b.track) return a.track - b.track
-            return a.start_at_position - b.start_at_position
-          })
-
-          // For arrows, intelligently pick 2 adjacent clips based on timeline position
-          // This is still a hack - ideally we'd detect spatial overlap with clip cards
-          const clipIndices = sorted.map((_, i) => i)
-
-          // Default to first 2 for now, but could enhance with spatial analysis
-          return {
-            ...a,
-            affectedEffects: [sorted[0].id, sorted[1].id],
-          }
-        }
-
-        return {
-          ...a,
-          affectedEffects: selectedEffectIds,
-        }
-      })
+      // Send all selected clip IDs with each annotation
+      // The AI will determine which clips to use based on:
+      // 1. The prompt (e.g., "second to third clip")
+      // 2. The sorted timeline order (clips are numbered 1, 2, 3)
+      // 3. The annotation type and visual context
+      const annotationsWithEffects = annotations.map(a => ({
+        ...a,
+        affectedEffects: selectedEffectIds,
+      }))
 
       const result = await executeAIEdit(annotationsWithEffects, prompt, store)
 
@@ -254,13 +234,13 @@ export function AnnotationModal() {
             </div>
 
             {/* Instruction */}
-            {annotations.length === 0 && (
+            {annotations.length === 0 && !prompt && (
               <div className="absolute inset-0 flex items-center justify-center text-center text-text-tertiary pointer-events-none">
                 <div>
-                  <div className="text-6xl mb-4">✏️</div>
-                  <div className="text-lg font-medium">Draw annotations to guide the AI</div>
+                  <div className="text-6xl mb-4">🎨</div>
+                  <div className="text-lg font-medium">Add AI-powered edits to your timeline</div>
                   <div className="text-sm mt-2 max-w-md">
-                    Draw arrows, shapes, or freehand annotations, then use clip numbers in your prompt.
+                    Draw annotations (optional) or just type what you want to do.
                     <br />
                     <span className="text-purple-400 font-medium">Example: "add fade from clip 2 to clip 3"</span>
                   </div>
@@ -293,10 +273,10 @@ export function AnnotationModal() {
             />
             <button
               onClick={handleSubmitToAI}
-              disabled={loading || annotations.length === 0}
+              disabled={loading}
               className="px-6 py-3 text-sm font-bold rounded-lg bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg hover:from-green-600 hover:to-green-700 hover:shadow-xl transition-all duration-200 border-2 border-green-400 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-lg"
             >
-              {loading ? '⏳ Executing...' : `🤖 Submit to AI (${annotations.length})`}
+              {loading ? '⏳ Executing...' : `🤖 Submit to AI${annotations.length > 0 ? ` (${annotations.length})` : ''}`}
             </button>
           </div>
         </div>

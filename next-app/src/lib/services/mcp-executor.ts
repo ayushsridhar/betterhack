@@ -33,8 +33,18 @@ export function executeMCPCall(call: MCPCall, store: EditorStore): MCPResult {
         // Support both parameter naming conventions (AI Brain vs MCP Server)
         const outgoing_effect_id = params.outgoing_effect_id || params.effectAId
         const incoming_effect_id = params.incoming_effect_id || params.effectBId
-        const transition_name = params.transition_name || params.transitionType || 'fade'
+        let transition_name = params.transition_name || params.transitionType || 'fade'
+        const direction = params.direction
         const duration = params.duration || 1000
+
+        // Normalize transition names: handle "slide" + direction, convert spaces to hyphens
+        if (transition_name === 'slide' && direction) {
+          transition_name = `slide-${direction}` // slide-left, slide-right, slide-up, slide-down
+        } else if (transition_name === 'wipe' && direction) {
+          transition_name = `wipe-${direction}`
+        }
+        // Convert spaces to hyphens (e.g., "slide up" → "slide-up")
+        transition_name = transition_name.replace(/\s+/g, '-').toLowerCase()
 
         // Validate effects exist and are adjacent
         const effectA = store.effects.find(e => e.id === outgoing_effect_id)

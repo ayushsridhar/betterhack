@@ -14,7 +14,7 @@ import { InspectorPanel } from "../inspector/inspector-panel"
 import { Timeline } from "../timeline/timeline"
 import { ExportModal } from "../export/export-modal"
 import { EditorHeader } from "./editor-header"
-import { DrawingToolbar, AnnotationContextBubble, DrawingOverlay, AnnotationModal } from "../annotations"
+import { AnnotationModal } from "../annotations"
 
 const leftTabs: { value: LeftPanelTab; label: string }[] = [
   { value: "media", label: "Media" },
@@ -26,12 +26,6 @@ export function EditorLayout() {
   const { onDragEnd } = useTimelineDrag()
   const leftPanelTab = useEditorStore((s) => s.leftPanelTab)
   const setLeftPanelTab = useEditorStore((s) => s.setLeftPanelTab)
-
-  const selectedAnnotationId = useEditorStore((s) => s.selected_annotation_id)
-  const annotations = useEditorStore((s) => s.annotations)
-  const setSelectedAnnotation = useEditorStore((s) => s.setSelectedAnnotation)
-
-  const selectedAnnotation = annotations.find(a => a.id === selectedAnnotationId)
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -83,29 +77,9 @@ export function EditorLayout() {
 
           {/* Center panel - Preview */}
           <div className="bg-bg-base overflow-hidden flex flex-col">
-            {/* Drawing Toolbar */}
-            <div className="p-2">
-              <DrawingToolbar />
-            </div>
-
             {/* Preview Area */}
             <div className="flex-1 overflow-hidden p-2 relative">
-              <div className="relative w-full h-full">
-                <CanvasPreview ref={previewContainerRef} />
-
-                {/* Drawing Overlay - captures pointer events for annotations */}
-                <DrawingOverlay />
-              </div>
-
-              {/* Annotation Context Bubble */}
-              {selectedAnnotation && (
-                <div className="absolute top-4 right-4 z-50">
-                  <AnnotationContextBubble
-                    annotation={selectedAnnotation}
-                    onClose={() => setSelectedAnnotation(null)}
-                  />
-                </div>
-              )}
+              <CanvasPreview ref={previewContainerRef} />
             </div>
 
             {/* Playback Controls */}
