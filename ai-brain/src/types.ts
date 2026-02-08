@@ -20,7 +20,7 @@ export interface Annotation {
 }
 
 // ============================================================================
-// Timeline State Types (from Omniclip)
+// Timeline State Types (from Picasso)
 // ============================================================================
 
 export interface EffectRect {

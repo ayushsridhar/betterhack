@@ -117,7 +117,7 @@ Please try a different approach or corrected parameters.`
 	 * Build system prompt
 	 */
 	private buildSystemPrompt(): string {
-		return `You are an AI assistant for a video editing application called Omniclip. Users can draw annotations directly on their video timeline preview and describe what edits they want in natural language.
+		return `You are an AI assistant for a video editing application called Picasso. Users can draw annotations directly on their video timeline preview and describe what edits they want in natural language.
 
 Your job is to interpret their visual annotations (arrows, rectangles, circles, freehand drawings) combined with their text prompts, and determine which video editing operations to perform.
 

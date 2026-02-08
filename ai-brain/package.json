@@ -1,7 +1,7 @@
 {
-  "name": "omniclip-ai-brain",
+  "name": "picasso-ai-brain",
   "version": "1.0.0",
-  "description": "AI integration for Omniclip visual annotations",
+  "description": "AI integration for Picasso visual annotations",
   "type": "module",
   "main": "dist/server.js",
   "scripts": {

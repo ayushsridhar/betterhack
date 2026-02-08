@@ -1,6 +1,6 @@
 import type { HistoricalState } from "../types"
 
-const STORAGE_PREFIX = "omniclip_"
+const STORAGE_PREFIX = "picasso_"
 
 export function saveProject(projectId: string, state: HistoricalState): void {
   try {

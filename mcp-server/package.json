@@ -1,11 +1,11 @@
 {
-  "name": "omniclip-mcp-server",
+  "name": "picasso-mcp-server",
   "version": "1.0.0",
-  "description": "MCP server for Omniclip video editor",
+  "description": "MCP server for Picasso video editor",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "omniclip-mcp": "dist/index.js"
+    "picasso-mcp": "dist/index.js"
   },
   "scripts": {
     "build": "tsc",

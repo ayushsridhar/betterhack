@@ -38,7 +38,7 @@ export function EditorHeader() {
     <header className="flex items-center justify-between px-3 h-9 bg-bg-raised border-b border-border-subtle shrink-0">
       {/* Logo */}
       <Link href="/editor" className="text-sm font-bold text-text-primary">
-        Omniclip
+        Picasso
       </Link>
 
       {/* Project name */}

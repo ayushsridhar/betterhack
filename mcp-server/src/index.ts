@@ -881,7 +881,7 @@ async function handleToolCall(name: string, args: Record<string, any>): Promise<
 
 const server = new Server(
 	{
-		name: "omniclip-mcp",
+		name: "picasso-mcp",
 		version: "1.0.0",
 	},
 	{
@@ -923,7 +923,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function main() {
 	const transport = new StdioServerTransport();
 	await server.connect(transport);
-	console.error("[MCP Server] Omniclip MCP server started (stdio transport)");
+	console.error("[MCP Server] Picasso MCP server started (stdio transport)");
 	console.error(`[MCP Server] WebSocket bridge on ws://localhost:${WS_PORT}`);
 }
 

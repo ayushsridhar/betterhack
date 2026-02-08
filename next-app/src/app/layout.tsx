@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Omniclip - Video Editor",
+  title: "Picasso - Video Editor",
   description: "Browser-based video editor",
 }
 
