@@ -3,6 +3,7 @@ import { XTrack } from "./timeline"
 import { Filter } from "./filters"
 import { Animation } from "./animations"
 import { Transition } from "./transitions"
+import { Annotation, DrawingMode } from "./annotations"
 
 export type ExportStatus = "complete" | "composing" | "demuxing" | "flushing" | "error"
 export type AspectRatio = "16/9" | "1/1" | "4/3" | "9/16" | "3/2" | "21/9"
@@ -28,6 +29,9 @@ export interface HistoricalState {
 
 export interface NonHistoricalState {
   selected_effect: AnyEffect | null
+  selected_annotation_id: string | null
+  selected_effects_for_annotation: string[] // Effect IDs selected for annotation
+  annotation_modal_open: boolean
   is_playing: boolean
   is_exporting: boolean
   export_progress: number
@@ -39,6 +43,8 @@ export interface NonHistoricalState {
   timebase: number
   log: string
   settings: Settings
+  drawing_mode: DrawingMode
+  annotations: Annotation[]
 }
 
 export type State = HistoricalState & NonHistoricalState

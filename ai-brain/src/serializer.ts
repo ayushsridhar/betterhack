@@ -68,9 +68,18 @@ export class AnnotationSerializer {
 		}
 
 		// Multiple clips - likely transition intent
-		const clipA = affectedClips[0]
-		const clipB = affectedClips[1]
-		return `Annotation ${index}: Arrow pointing ${direction} from clip with ID "${clipA.id}" (name: "${this.getClipName(clipA)}", ${clipA.kind}, track ${clipA.track}) to clip with ID "${clipB.id}" (name: "${this.getClipName(clipB)}", ${clipB.kind}, track ${clipB.track})`
+		// Sort clips by timeline order (track, then position) to properly identify "from" and "to"
+		const sortedClips = [...affectedClips].sort((a, b) => {
+			if (a.track !== b.track) return a.track - b.track
+			return a.start_at_position - b.start_at_position
+		})
+
+		// For arrows between clips, take the two most relevant based on direction
+		// For now, use first two in timeline order (can enhance with spatial analysis later)
+		const clipA = sortedClips[0]
+		const clipB = sortedClips[1] || sortedClips[0]
+
+		return `Annotation ${index}: Arrow pointing ${direction} from clip with ID "${clipA.id}" (name: "${this.getClipName(clipA)}", ${clipA.kind}, track ${clipA.track}, timeline position: ${sortedClips.indexOf(clipA) + 1}) to clip with ID "${clipB.id}" (name: "${this.getClipName(clipB)}", ${clipB.kind}, track ${clipB.track}, timeline position: ${sortedClips.indexOf(clipB) + 1})`
 	}
 
 	/**

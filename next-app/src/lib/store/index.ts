@@ -30,6 +30,8 @@ import type {
   TextStyleTextBaseline,
   TextStyleWhiteSpace,
   LineJoin,
+  Annotation,
+  DrawingToolType,
 } from "../types"
 import type { LeftPanelTab, RightPanelTab, UIState } from "./slices/ui"
 import { initialHistoricalState } from "./slices/historical"
@@ -157,6 +159,22 @@ export interface EditorStore
   setInspectorSubTab: (tab: UIState["inspectorSubTab"]) => void
   setIsExportModalOpen: (open: boolean) => void
   resetProject: () => void
+
+  // Annotation actions
+  setDrawingMode: (enabled: boolean, tool?: DrawingToolType, color?: string, strokeWidth?: number) => void
+  setDrawingTool: (tool: DrawingToolType) => void
+  setDrawingColor: (color: string) => void
+  setDrawingStrokeWidth: (width: number) => void
+  addAnnotation: (annotation: Annotation) => void
+  updateAnnotation: (id: string, patch: Partial<Annotation>) => void
+  removeAnnotation: (id: string) => void
+  clearAnnotations: () => void
+  setSelectedAnnotation: (id: string | null) => void
+  setAnnotations: (annotations: Annotation[]) => void
+  setSelectedEffectsForAnnotation: (ids: string[]) => void
+  toggleEffectSelectionForAnnotation: (id: string) => void
+  openAnnotationModal: () => void
+  closeAnnotationModal: () => void
 }
 
 export const useEditorStore = create<EditorStore>()(
@@ -475,6 +493,71 @@ export const useEditorStore = create<EditorStore>()(
           Object.assign(s, initialHistoricalState)
           Object.assign(s, initialNonHistoricalState)
         }),
+
+      // ─── Annotation Actions ───
+      setDrawingMode: (enabled, tool, color, strokeWidth) =>
+        set((s) => {
+          s.drawing_mode.enabled = enabled
+          if (tool !== undefined) s.drawing_mode.tool = tool
+          if (color !== undefined) s.drawing_mode.color = color
+          if (strokeWidth !== undefined) s.drawing_mode.strokeWidth = strokeWidth
+        }, false),
+
+      setDrawingTool: (tool) =>
+        set((s) => { s.drawing_mode.tool = tool }, false),
+
+      setDrawingColor: (color) =>
+        set((s) => { s.drawing_mode.color = color }, false),
+
+      setDrawingStrokeWidth: (width) =>
+        set((s) => { s.drawing_mode.strokeWidth = width }, false),
+
+      addAnnotation: (annotation) =>
+        set((s) => { s.annotations.push(annotation) }, false),
+
+      updateAnnotation: (id, patch) =>
+        set((s) => {
+          const annotation = s.annotations.find(a => a.id === id)
+          if (annotation) {
+            Object.assign(annotation, patch)
+          }
+        }, false),
+
+      removeAnnotation: (id) =>
+        set((s) => {
+          s.annotations = s.annotations.filter(a => a.id !== id)
+        }, false),
+
+      clearAnnotations: () =>
+        set((s) => { s.annotations = [] }, false),
+
+      setSelectedAnnotation: (id) =>
+        set((s) => { s.selected_annotation_id = id }, false),
+
+      setAnnotations: (annotations) =>
+        set((s) => { s.annotations = annotations }, false),
+
+      setSelectedEffectsForAnnotation: (ids) =>
+        set((s) => { s.selected_effects_for_annotation = ids }, false),
+
+      toggleEffectSelectionForAnnotation: (id) =>
+        set((s) => {
+          const index = s.selected_effects_for_annotation.indexOf(id)
+          if (index >= 0) {
+            s.selected_effects_for_annotation.splice(index, 1)
+          } else {
+            s.selected_effects_for_annotation.push(id)
+          }
+        }, false),
+
+      openAnnotationModal: () =>
+        set((s) => { s.annotation_modal_open = true }, false),
+
+      closeAnnotationModal: () =>
+        set((s) => {
+          s.annotation_modal_open = false
+          s.selected_effects_for_annotation = []
+        }, false),
     })),
     {
       limit: 64,
