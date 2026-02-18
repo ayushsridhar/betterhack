@@ -14,6 +14,7 @@ import { InspectorPanel } from "../inspector/inspector-panel"
 import { Timeline } from "../timeline/timeline"
 import { ExportModal } from "../export/export-modal"
 import { EditorHeader } from "./editor-header"
+import { AnnotationModal } from "../annotations"
 
 const leftTabs: { value: LeftPanelTab; label: string }[] = [
   { value: "media", label: "Media" },
@@ -76,9 +77,12 @@ export function EditorLayout() {
 
           {/* Center panel - Preview */}
           <div className="bg-bg-base overflow-hidden flex flex-col">
-            <div className="flex-1 overflow-hidden p-2">
+            {/* Preview Area */}
+            <div className="flex-1 overflow-hidden p-2 relative">
               <CanvasPreview ref={previewContainerRef} />
             </div>
+
+            {/* Playback Controls */}
             <div className="flex items-center justify-between px-3">
               <TimecodeDisplay />
               <PlaybackControls containerRef={previewContainerRef} />
@@ -96,8 +100,9 @@ export function EditorLayout() {
           </div>
         </div>
 
-        {/* Export modal */}
+        {/* Modals */}
         <ExportModal />
+        <AnnotationModal />
       </div>
     </DndContext>
   )

@@ -67,10 +67,19 @@ export class AnnotationSerializer {
 			return `Annotation ${index}: Arrow pointing ${direction} on clip with ID "${clip.id}" (name: "${this.getClipName(clip)}", ${clip.kind}, track ${clip.track}, ${this.formatTime(clip.start_at_position)}-${this.formatTime(clip.start_at_position + clip.duration)})`
 		}
 
-		// Multiple clips - likely transition intent
-		const clipA = affectedClips[0]
-		const clipB = affectedClips[1]
-		return `Annotation ${index}: Arrow pointing ${direction} from clip with ID "${clipA.id}" (name: "${this.getClipName(clipA)}", ${clipA.kind}, track ${clipA.track}) to clip with ID "${clipB.id}" (name: "${this.getClipName(clipB)}", ${clipB.kind}, track ${clipB.track})`
+		// Multiple clips - list all available clips so AI can choose based on prompt
+		// Sort clips by timeline order (track, then position)
+		const sortedClips = [...affectedClips].sort((a, b) => {
+			if (a.track !== b.track) return a.track - b.track
+			return a.start_at_position - b.start_at_position
+		})
+
+		// List all clips with their positions for AI to choose from
+		const clipList = sortedClips.map((clip, i) =>
+			`Clip ${i + 1}: ID "${clip.id}" (${clip.kind}, track ${clip.track}, ${this.formatTime(clip.start_at_position)}-${this.formatTime(clip.start_at_position + clip.duration)})`
+		).join('\n  ')
+
+		return `Annotation ${index}: Arrow pointing ${direction}. Available clips in timeline order:\n  ${clipList}\n  Use the clip numbers (1, 2, 3, etc.) from the user's prompt to select which clips to transition between.`
 	}
 
 	/**

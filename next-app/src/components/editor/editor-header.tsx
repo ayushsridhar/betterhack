@@ -10,6 +10,15 @@ export function EditorHeader() {
   const projectName = useEditorStore((s) => s.projectName)
   const setProjectName = useEditorStore((s) => s.setProjectName)
   const setIsExportModalOpen = useEditorStore((s) => s.setIsExportModalOpen)
+  const effects = useEditorStore((s) => s.effects)
+  const setSelectedEffectsForAnnotation = useEditorStore((s) => s.setSelectedEffectsForAnnotation)
+  const openAnnotationModal = useEditorStore((s) => s.openAnnotationModal)
+
+  const handleOpenAnnotationModal = () => {
+    const effectIds = effects.map(e => e.id)
+    setSelectedEffectsForAnnotation(effectIds)
+    openAnnotationModal()
+  }
 
   const [isEditing, setIsEditing] = useState(false)
   const [nameValue, setNameValue] = useState(projectName)
@@ -38,7 +47,7 @@ export function EditorHeader() {
     <header className="flex items-center justify-between px-3 h-9 bg-bg-raised border-b border-border-subtle shrink-0">
       {/* Logo */}
       <Link href="/editor" className="text-sm font-bold text-text-primary">
-        Omniclip
+        Picasso
       </Link>
 
       {/* Project name */}
@@ -86,6 +95,18 @@ export function EditorHeader() {
         >
           Save
         </button>
+
+        {/* Annotate Button */}
+        {effects.length > 0 && (
+          <button
+            onClick={handleOpenAnnotationModal}
+            className="flex items-center gap-1.5 h-7 px-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white text-xs font-bold rounded transition-all shadow-sm"
+            title={`Annotate all ${effects.length} clip${effects.length !== 1 ? 's' : ''}`}
+          >
+            🎨 Annotate ({effects.length})
+          </button>
+        )}
+
         <button
           onClick={() => setIsExportModalOpen(true)}
           className="flex items-center gap-1.5 h-7 px-3 bg-accent hover:bg-accent-hover text-white text-xs font-medium rounded transition-colors"

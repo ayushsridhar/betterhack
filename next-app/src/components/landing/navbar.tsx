@@ -5,7 +5,7 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 bg-bg-base/80 backdrop-blur-sm border-b border-border-subtle">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link href="/" className="text-xl font-bold text-text-primary">
-          Omniclip
+          Picasso
         </Link>
         <div className="flex items-center gap-6">
           <a
